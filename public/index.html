@@ -89,14 +89,21 @@
     </div>
 
     <!-- Simulation controls -->
-    <div id="sim-controls" style="display:none; position:absolute; bottom:16px; left:50%; transform:translateX(-50%); background:white; border:1px solid #e2e4e9; border-radius:12px; padding:10px 14px; box-shadow:0 8px 32px rgba(0,0,0,0.10); flex-direction:column; gap:8px; min-width:280px;">
-      <div style="display:flex; align-items:center; gap:8px;">
-        <button class="btn btn-primary btn-sm" id="btn-sim-play">▶ Play</button>
-        <button class="btn btn-secondary btn-sm" id="btn-sim-stop">■ Stop</button>
-        <div style="flex:1; height:5px; background:#f0f1f4; border-radius:4px; overflow:hidden;">
-          <div id="sim-progress" style="height:100%; width:0%; background:#0057ff; transition:width 0.05s;"></div>
-        </div>
+    <div id="sim-controls" style="display:none; position:absolute; bottom:16px; left:50%; transform:translateX(-50%); background:white; border:1px solid #e2e4e9; border-radius:12px; padding:10px 16px; box-shadow:0 8px 32px rgba(0,0,0,0.10); flex-direction:column; gap:8px; min-width:300px;">
+      <!-- Progress bar -->
+      <div style="height:4px; background:#f0f1f4; border-radius:4px; overflow:hidden;">
+        <div id="sim-progress" style="height:100%; width:0%; background:#0057ff; transition:width 0.05s;"></div>
       </div>
+      <!-- Controls -->
+      <div style="display:flex; align-items:center; justify-content:center; gap:6px;">
+        <button class="btn btn-secondary btn-sm" id="btn-sim-start" title="Zum Anfang">⏮</button>
+        <button class="btn btn-secondary btn-sm" id="btn-sim-stepback" title="Schritt zurück">⏪</button>
+        <button class="btn btn-primary" id="btn-sim-play" style="width:40px; padding:0;">▶</button>
+        <button class="btn btn-secondary btn-sm" id="btn-sim-stop" title="Stop">■</button>
+        <button class="btn btn-secondary btn-sm" id="btn-sim-stepfwd" title="Schritt vor">⏩</button>
+        <button class="btn btn-secondary btn-sm" id="btn-sim-end" title="Zum Ende">⏭</button>
+      </div>
+      <!-- Speed -->
       <div style="display:flex; align-items:center; gap:8px;">
         <span style="font-size:11px; color:#9398a5; white-space:nowrap;">Geschwindigkeit</span>
         <input type="range" id="sim-speed" min="1" max="15" value="3" style="flex:1; cursor:pointer;">

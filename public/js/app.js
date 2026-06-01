@@ -97,23 +97,42 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Simulation controls ──
   document.getElementById('btn-sim-play').addEventListener('click', () => {
     const btn = document.getElementById('btn-sim-play');
-    if (Simulation.isDone()) {
-      Simulation.stop();
-      Simulation.play();
-      btn.textContent = '⏸ Pause';
-    } else if (Simulation.isRunning()) {
+    if (Simulation.isRunning()) {
       Simulation.pause();
-      btn.textContent = '▶ Play';
+      btn.innerHTML = '▶';
     } else {
       Simulation.play();
-      btn.textContent = '⏸ Pause';
+      btn.innerHTML = '⏸';
+      // Auto-reset button when done
+      const check = setInterval(() => {
+        if (!Simulation.isRunning()) { btn.innerHTML = '▶'; clearInterval(check); }
+      }, 200);
     }
   });
 
   document.getElementById('btn-sim-stop').addEventListener('click', () => {
     Simulation.stop();
-    document.getElementById('btn-sim-play').textContent = '▶ Play';
-    document.getElementById('sim-progress').style.width = '0%';
+    document.getElementById('btn-sim-play').innerHTML = '▶';
+  });
+
+  document.getElementById('btn-sim-start').addEventListener('click', () => {
+    Simulation.toStart();
+    document.getElementById('btn-sim-play').innerHTML = '▶';
+  });
+
+  document.getElementById('btn-sim-end').addEventListener('click', () => {
+    Simulation.toEnd();
+    document.getElementById('btn-sim-play').innerHTML = '▶';
+  });
+
+  document.getElementById('btn-sim-stepfwd').addEventListener('click', () => {
+    Simulation.stepForward();
+    document.getElementById('btn-sim-play').innerHTML = '▶';
+  });
+
+  document.getElementById('btn-sim-stepback').addEventListener('click', () => {
+    Simulation.stepBackward();
+    document.getElementById('btn-sim-play').innerHTML = '▶';
   });
 
   document.getElementById('sim-speed').addEventListener('input', (e) => {
