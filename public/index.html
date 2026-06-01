@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ncWOP — Online CAM</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- ── Header ── -->
+  <header class="app-header">
+    <div class="logo">nc<span>WOP</span></div>
+    <div class="header-divider"></div>
+    <div class="header-title">Neues Projekt</div>
+    <div class="header-actions">
+      <button class="btn btn-secondary btn-sm" id="btn-reset">Zurücksetzen</button>
+      <button class="btn btn-primary btn-sm" id="btn-export" disabled>G-Code exportieren</button>
+    </div>
+  </header>
+
+  <!-- ── Sidebar: Rohling + Operationen ── -->
+  <aside class="sidebar">
+
+    <!-- Step indicator -->
+    <div class="step-indicator">
+      <div class="step active" id="step-1">
+        <div class="step-num">1</div> Rohling
+      </div>
+      <div class="step-arrow">›</div>
+      <div class="step" id="step-2">
+        <div class="step-num">2</div> Operation
+      </div>
+      <div class="step-arrow">›</div>
+      <div class="step" id="step-3">
+        <div class="step-num">3</div> G-Code
+      </div>
+    </div>
+
+    <!-- Rohling definieren -->
+    <div class="sidebar-section" id="section-blank">
+      <div class="sidebar-label">Rohling</div>
+
+      <div class="form-group">
+        <div class="type-toggle" id="blank-type-toggle">
+          <button class="active" data-type="box">Box</button>
+          <button data-type="cylinder">Zylinder</button>
+        </div>
+      </div>
+
+      <!-- Box params -->
+      <div id="blank-box-params">
+        <div class="param-grid">
+          <div class="form-group">
+            <label class="form-label">Länge X</label>
+            <div class="form-control-unit">
+              <input type="number" id="blank-x" value="100" min="1">
+              <span class="unit-badge">mm</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Breite Y</label>
+            <div class="form-control-unit">
+              <input type="number" id="blank-y" value="80" min="1">
+              <span class="unit-badge">mm</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Höhe Z</label>
+          <div class="form-control-unit">
+            <input type="number" id="blank-z" value="30" min="1">
+            <span class="unit-badge">mm</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cylinder params -->
+      <div id="blank-cylinder-params" style="display:none">
+        <div class="param-grid">
+          <div class="form-group">
+            <label class="form-label">Durchmesser</label>
+            <div class="form-control-unit">
+              <input type="number" id="blank-dia" value="80" min="1">
+              <span class="unit-badge">mm</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Höhe</label>
+            <div class="form-control-unit">
+              <input type="number" id="blank-h" value="50" min="1">
+              <span class="unit-badge">mm</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-full" id="btn-create-blank">Rohling erstellen</button>
+    </div>
+
+    <!-- Operationen -->
+    <div class="sidebar-section" id="section-ops" style="display:none">
+      <div class="sidebar-label">Operationen</div>
+      <div id="op-list"></div>
+      <button class="btn btn-secondary btn-full" id="btn-add-op">+ Operation hinzufügen</button>
+    </div>
+
+  </aside>
+
+  <!-- ── Main 3D Viewport ── -->
+  <main class="main-viewport">
+    <canvas id="three-canvas"></canvas>
+    <div class="viewport-overlay">
+      <button class="viewport-btn" id="btn-view-top" title="Draufsicht">⊤</button>
+      <button class="viewport-btn" id="btn-view-iso" title="Isometrisch">◈</button>
+      <button class="viewport-btn" id="btn-view-front" title="Vorderansicht">▣</button>
+    </div>
+  </main>
+
+  <!-- ── Right Panel: Parameter ── -->
+  <aside class="right-panel" id="right-panel">
+    <div class="panel-header">Parameter</div>
+    <div class="panel-body" id="panel-content">
+      <p style="color:var(--text-3); font-size:13px;">Rohling definieren und Operation wählen.</p>
+    </div>
+  </aside>
+
+</div>
+
+<!-- Three.js -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
+
+<!-- App -->
+<script src="js/viewer.js"></script>
+<script src="js/blank.js"></script>
+<script src="js/operations.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
