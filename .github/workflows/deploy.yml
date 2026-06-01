@@ -21,6 +21,7 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./public/
           server-dir: /ncwop/
+
           protocol: ftp
           port: 21
           timeout: 60000
