@@ -192,7 +192,7 @@ const Operations = (() => {
               Seitl. Zust. ae
             </span>
             <div style="display:flex; gap:4px; align-items:center;">
-              <div class="form-control-unit" style="width:68px;">
+              <div class="form-control-unit" style="width:80px;">
                 <input type="number" id="op-ae-pct" value="${p.aePct ?? 45}" min="1" max="100" step="1" oninput="updateAeMm('r')">
                 <span class="unit-badge">%</span>
               </div>
@@ -215,7 +215,7 @@ const Operations = (() => {
               Tiefenzust. ap
             </span>
             <div style="display:flex; gap:4px; align-items:center;">
-              <div class="form-control-unit" style="width:68px;">
+              <div class="form-control-unit" style="width:80px;">
                 <input type="number" id="op-ap" value="${rAp}" min="0.1" step="0.1" oninput="updateSteps('r')">
                 <span class="unit-badge">mm</span>
               </div>

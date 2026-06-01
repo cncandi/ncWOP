@@ -35,7 +35,7 @@ body {
 .app-shell {
   display: grid;
   grid-template-rows: 52px 1fr;
-  grid-template-columns: 300px 1fr 320px;
+  grid-template-columns: 260px 1fr 380px;
   grid-template-areas:
     "header header header"
     "sidebar main panel";
@@ -49,11 +49,11 @@ body {
 }
 
 .app-shell.sidebar-hidden {
-  grid-template-columns: 0px 1fr 320px;
+  grid-template-columns: 0px 1fr 380px;
 }
 
 .app-shell.panel-hidden {
-  grid-template-columns: 300px 1fr 0px;
+  grid-template-columns: 260px 1fr 0px;
 }
 
 .app-shell.sidebar-hidden.panel-hidden {
@@ -551,9 +551,10 @@ select.form-control {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 3px 12px;
-  gap: 8px;
-  min-height: 28px;
+  padding: 4px 14px;
+  gap: 12px;
+  min-height: 30px;
+  flex-wrap: nowrap;
 }
 
 .param-row:hover {
@@ -565,10 +566,11 @@ select.form-control {
   color: var(--text-2);
   flex: 1;
   white-space: nowrap;
+  min-width: 120px;
 }
 
 .param-row-input {
-  width: 100px;
+  width: 120px;
   flex-shrink: 0;
 }
 
