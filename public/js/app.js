@@ -118,7 +118,10 @@ document.addEventListener('DOMContentLoaded', () => {
         cSteps: parseInt(document.getElementById('op-c-steps')?.value)   || 1,
         feed: 800, speed: 3000,
       };
-      const result = Operations.generateFaceMilling({ tool, params }, Blank.getData(), index);
+      const existingStateIndex = Operations.getAll()[index]?.opStateIndex >= 0
+        ? Operations.getAll()[index].opStateIndex
+        : undefined;
+      const result = Operations.generateFaceMilling({ tool, params }, Blank.getData(), index, existingStateIndex);
       const ops = Operations.getAll();
       ops[index].opStateIndex = result.opStateIndex;
       ops[index].tool = tool;

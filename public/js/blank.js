@@ -42,20 +42,34 @@ const Blank = (() => {
     return activeMesh;
   }
 
-  // Called after calculating an operation — stores resulting params
-  function addOpState(ap) {
-    const prev = opStates.length > 0
-      ? opStates[opStates.length - 1]
-      : { ...originalParams };
+  // Called after calculating an operation
+  // index = existing op index (recalculate), undefined = new op
+  function addOpState(ap, index) {
+    const isNew = index === undefined;
+    const targetIndex = isNew ? opStates.length : index;
+    const prevParams = targetIndex === 0 ? { ...originalParams } : { ...(opStates[targetIndex - 1] || originalParams) };
 
-    const next = { ...prev };
+    const next = { ...prevParams };
     if (blankType === 'box') {
-      next.z = Math.max(1, prev.z - ap);
+      next.z = Math.max(1, prevParams.z - ap);
     } else {
-      next.h = Math.max(1, prev.h - ap);
+      next.h = Math.max(1, prevParams.h - ap);
     }
-    opStates.push(next);
-    return opStates.length - 1;
+
+    if (isNew) {
+      opStates.push(next);
+    } else {
+      opStates[targetIndex] = next;
+      // Recalculate all subsequent ops with same ap (they depend on this state)
+      for (let i = targetIndex + 1; i < opStates.length; i++) {
+        const p = opStates[i - 1];
+        const n = { ...p };
+        if (blankType === 'box') n.z = Math.max(1, p.z - ap);
+        else n.h = Math.max(1, p.h - ap);
+        opStates[i] = n;
+      }
+    }
+    return targetIndex;
   }
 
   // Update state for existing op index (recalculate)

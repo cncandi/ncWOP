@@ -22,7 +22,7 @@ const Operations = (() => {
     }
   }
 
-  function generateFaceMilling(op, blankData, opIndex) {
+  function generateFaceMilling(op, blankData, opIndex, existingStateIndex) {
     const { tool, params } = op;
     const blank = blankData.params;
     const ae = params.ae;
@@ -71,8 +71,8 @@ const Operations = (() => {
     opToolpaths[opIndex] = { lineObj, points, tool };
     activeIndex = opIndex;
 
-    // Store op state in blank
-    const opStateIndex = Blank.addOpState(ap);
+    // Store op state in blank — update if recalculating, append if new
+    const opStateIndex = Blank.addOpState(ap, existingStateIndex);
 
     // Init simulation
     Simulation.init(points, tool.diameter, tool.length);
