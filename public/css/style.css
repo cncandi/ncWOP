@@ -504,10 +504,10 @@ select.form-control {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text);
-  padding: 14px 16px 10px;
+  padding: 10px 12px 10px;
   border-bottom: 1px solid var(--border);
 }
 
@@ -518,31 +518,31 @@ select.form-control {
 
 .param-group {
   border-bottom: 1px solid var(--border);
-  padding: 0 0 8px 0;
+  padding: 0 0 4px 0;
   margin-bottom: 0;
 }
 
 .param-group-header {
   display: flex;
   align-items: center;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--text-2);
   background: var(--surface2);
-  padding: 7px 16px;
+  padding: 5px 12px;
   border-bottom: 1px solid var(--border);
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .param-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 5px 16px;
-  gap: 10px;
-  min-height: 34px;
+  padding: 3px 12px;
+  gap: 8px;
+  min-height: 28px;
 }
 
 .param-row:hover {
@@ -557,7 +557,7 @@ select.form-control {
 }
 
 .param-row-input {
-  width: 110px;
+  width: 100px;
   flex-shrink: 0;
 }
 

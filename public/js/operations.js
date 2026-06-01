@@ -113,8 +113,12 @@ const Operations = (() => {
 
     return `
       <div class="param-section-title">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="8" y1="21" x2="16" y2="21"/></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="8" y1="21" x2="16" y2="21"/></svg>
         Planfräsen
+        <button class="btn btn-primary btn-sm" id="btn-calc-toolpath" style="margin-left:auto; gap:4px;">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Berechnen
+        </button>
       </div>
 
       <!-- Allgemein -->
@@ -148,7 +152,7 @@ const Operations = (() => {
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="2.5" style="margin-right:4px;vertical-align:middle"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             Fräsrichtung
           </span>
-          <select id="op-dir" class="form-control" style="height:28px; font-size:12px; width:110px;">
+          <select id="op-dir" class="form-control" style="height:26px; font-size:12px; width:100px;">
             <option value="climb" ${dir==='climb'?'selected':''}>Gleichlauf</option>
             <option value="conventional" ${dir==='conventional'?'selected':''}>Gegenlauf</option>
             <option value="auto" ${dir==='auto'?'selected':''}>Auto</option>
@@ -170,11 +174,11 @@ const Operations = (() => {
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" style="margin-right:4px;vertical-align:middle"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
               Werkzeug
             </span>
-            <input type="text" id="op-r-tool" value="${rTool}" class="form-control" style="width:110px; height:28px; font-size:12px;">
+            <input type="text" id="op-r-tool" value="${rTool}" class="form-control" style="width:110px; height:26px; font-size:12px;">
           </div>
           <div class="param-row">
             <span class="param-row-label">Modus</span>
-            <select id="op-r-mode" class="form-control" style="height:28px; font-size:12px; width:110px;">
+            <select id="op-r-mode" class="form-control" style="height:26px; font-size:12px; width:100px;">
               <option value="parallel" ${rMode==='parallel'?'selected':''}>Parallel</option>
               <option value="contour" ${rMode==='contour'?'selected':''}>Konturparallel</option>
               <option value="spiral" ${rMode==='spiral'?'selected':''}>Spiralförmig</option>
@@ -217,11 +221,11 @@ const Operations = (() => {
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" style="margin-right:4px;vertical-align:middle"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
               Werkzeug
             </span>
-            <input type="text" id="op-f-tool" value="${fTool}" class="form-control" style="width:110px; height:28px; font-size:12px;">
+            <input type="text" id="op-f-tool" value="${fTool}" class="form-control" style="width:110px; height:26px; font-size:12px;">
           </div>
           <div class="param-row">
             <span class="param-row-label">Modus</span>
-            <select id="op-f-mode" class="form-control" style="height:28px; font-size:12px; width:110px;">
+            <select id="op-f-mode" class="form-control" style="height:26px; font-size:12px; width:100px;">
               <option value="traditional" ${fMode==='traditional'?'selected':''}>Traditional</option>
               <option value="climb" ${fMode==='climb'?'selected':''}>Gleichlauf</option>
             </select>
@@ -250,7 +254,7 @@ const Operations = (() => {
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" style="margin-right:4px;vertical-align:middle"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
               Werkzeug
             </span>
-            <input type="text" id="op-c-tool" value="${cTool}" class="form-control" style="width:110px; height:28px; font-size:12px;">
+            <input type="text" id="op-c-tool" value="${cTool}" class="form-control" style="width:110px; height:26px; font-size:12px;">
           </div>
           <div class="param-row">
             <span class="param-row-label">Fasentiefe</span>
@@ -269,12 +273,7 @@ const Operations = (() => {
         </div>
       </div>
 
-      <div style="padding:12px 16px;">
-        <button class="btn btn-primary btn-full" id="btn-calc-toolpath">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:6px"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-          Werkzeugweg berechnen
-        </button>
-      </div>
+
     `;
   }
   return { addOperation, getAll, generateFaceMilling, renderPanel, showToolpath, hideAllToolpaths };
