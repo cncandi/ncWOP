@@ -498,3 +498,69 @@ select.form-control {
   border-radius: 6px 0 0 6px;
   box-shadow: -2px 0 6px rgba(0,0,0,0.06);
 }
+
+/* ── Structured parameter panel ── */
+.param-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.param-section-icon {
+  font-size: 18px;
+  color: var(--accent);
+}
+
+.param-group {
+  border-bottom: 1px solid var(--border);
+  padding: 0 0 8px 0;
+  margin-bottom: 0;
+}
+
+.param-group-header {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  background: var(--surface2);
+  padding: 7px 16px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+
+.param-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 16px;
+  gap: 10px;
+  min-height: 34px;
+}
+
+.param-row:hover {
+  background: var(--surface2);
+}
+
+.param-row-label {
+  font-size: 13px;
+  color: var(--text-2);
+  flex: 1;
+  white-space: nowrap;
+}
+
+.param-row-input {
+  width: 110px;
+  flex-shrink: 0;
+}
+
+.param-row-input input {
+  width: 100%;
+}

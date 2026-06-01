@@ -91,42 +91,94 @@ const Operations = (() => {
     const spd  = op && op.params && op.params.speed? op.params.speed  : 3000;
     const ae   = op && op.params && op.params.ae   ? op.params.ae     : 12;
     const ap   = op && op.params && op.params.ap   ? op.params.ap     : 2;
+    const safeZ= op && op.params && op.params.safeZ? op.params.safeZ  : 50;
+    const refZ = op && op.params && op.params.refZ ? op.params.refZ   : 0;
 
     return `
-      <div class="sidebar-label" style="margin-bottom:14px">Planfräsen</div>
-      <div class="sidebar-label">Werkzeug</div>
-      <div class="param-grid">
-        <div class="form-group">
-          <label class="form-label">Durchmesser</label>
-          <div class="form-control-unit"><input type="number" id="op-tool-dia" value="${dia}" min="1"><span class="unit-badge">mm</span></div>
+      <div class="param-section-title">
+        <span class="param-section-icon">◧</span> Planfräsen
+      </div>
+
+      <!-- Misc -->
+      <div class="param-group">
+        <div class="param-group-header">Allgemein</div>
+        <div class="param-row">
+          <span class="param-row-label">Safe Z</span>
+          <div class="form-control-unit param-row-input">
+            <input type="number" id="op-safeZ" value="${safeZ}" min="0">
+            <span class="unit-badge">mm</span>
+          </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Länge</label>
-          <div class="form-control-unit"><input type="number" id="op-tool-len" value="${len}" min="1"><span class="unit-badge">mm</span></div>
+        <div class="param-row">
+          <span class="param-row-label">Referenz Z</span>
+          <div class="form-control-unit param-row-input">
+            <input type="number" id="op-refZ" value="${refZ}">
+            <span class="unit-badge">mm</span>
+          </div>
         </div>
       </div>
-      <div class="divider"></div>
-      <div class="sidebar-label">Schnittparameter</div>
-      <div class="param-grid">
-        <div class="form-group">
-          <label class="form-label">Vorschub</label>
-          <div class="form-control-unit"><input type="number" id="op-feed" value="${feed}" min="1"><span class="unit-badge">mm/m</span></div>
+
+      <!-- Tool -->
+      <div class="param-group">
+        <div class="param-group-header">
+          <input type="checkbox" checked style="margin-right:6px; accent-color:var(--accent);">
+          Werkzeug
         </div>
-        <div class="form-group">
-          <label class="form-label">Drehzahl</label>
-          <div class="form-control-unit"><input type="number" id="op-speed" value="${spd}" min="1"><span class="unit-badge">RPM</span></div>
+        <div class="param-row">
+          <span class="param-row-label">Durchmesser</span>
+          <div class="form-control-unit param-row-input">
+            <input type="number" id="op-tool-dia" value="${dia}" min="1">
+            <span class="unit-badge">mm</span>
+          </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Seitl. Zust. ae</label>
-          <div class="form-control-unit"><input type="number" id="op-ae" value="${ae}" min="0.1" step="0.1"><span class="unit-badge">mm</span></div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Tiefenzust. ap</label>
-          <div class="form-control-unit"><input type="number" id="op-ap" value="${ap}" min="0.1" step="0.1"><span class="unit-badge">mm</span></div>
+        <div class="param-row">
+          <span class="param-row-label">Länge</span>
+          <div class="form-control-unit param-row-input">
+            <input type="number" id="op-tool-len" value="${len}" min="1">
+            <span class="unit-badge">mm</span>
+          </div>
         </div>
       </div>
-      <div class="divider"></div>
-      <button class="btn btn-primary btn-full" id="btn-calc-toolpath">Werkzeugweg berechnen</button>
+
+      <!-- Roughing -->
+      <div class="param-group">
+        <div class="param-group-header">
+          <input type="checkbox" id="chk-roughing" checked style="margin-right:6px; accent-color:var(--accent);">
+          Schruppen
+        </div>
+        <div class="param-row">
+          <span class="param-row-label">Tiefenzust. ap</span>
+          <div class="form-control-unit param-row-input">
+            <input type="number" id="op-ap" value="${ap}" min="0.1" step="0.1">
+            <span class="unit-badge">mm</span>
+          </div>
+        </div>
+        <div class="param-row">
+          <span class="param-row-label">Seitl. Zust. ae</span>
+          <div class="form-control-unit param-row-input">
+            <input type="number" id="op-ae" value="${ae}" min="0.1" step="0.1">
+            <span class="unit-badge">mm</span>
+          </div>
+        </div>
+        <div class="param-row">
+          <span class="param-row-label">Vorschub</span>
+          <div class="form-control-unit param-row-input">
+            <input type="number" id="op-feed" value="${feed}" min="1">
+            <span class="unit-badge">mm/m</span>
+          </div>
+        </div>
+        <div class="param-row">
+          <span class="param-row-label">Drehzahl</span>
+          <div class="form-control-unit param-row-input">
+            <input type="number" id="op-speed" value="${spd}" min="1">
+            <span class="unit-badge">RPM</span>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-full" id="btn-calc-toolpath" style="margin-top:4px;">
+        Werkzeugweg berechnen
+      </button>
     `;
   }
 
