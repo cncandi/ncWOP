@@ -63,10 +63,15 @@ document.addEventListener('DOMContentLoaded', () => {
       const ops = Operations.getAll();
       if (ops[opIndex] && ops[opIndex].opStateIndex >= 0) {
         Blank.showOpState(ops[opIndex].opStateIndex);
+        Operations.showToolpath(opIndex);
         document.getElementById('btn-show-after').style.background = '#0057ff';
         document.getElementById('btn-show-after').style.color = '#fff';
         document.getElementById('btn-show-before').style.background = '';
         document.getElementById('btn-show-before').style.color = '';
+        // Show sim controls if toolpath exists
+        document.getElementById('sim-controls').style.display = 'flex';
+        document.getElementById('sim-progress').style.width = '0%';
+        document.getElementById('btn-sim-play').innerHTML = '▶';
       }
     });
     opList.appendChild(card);
@@ -91,9 +96,11 @@ document.addEventListener('DOMContentLoaded', () => {
         ae: parseFloat(document.getElementById('op-ae').value),
         ap: parseFloat(document.getElementById('op-ap').value),
       };
-      const result = Operations.generateFaceMilling({ tool, params }, Blank.getData());
+      const result = Operations.generateFaceMilling({ tool, params }, Blank.getData(), index);
       const ops = Operations.getAll();
       ops[index].opStateIndex = result.opStateIndex;
+      ops[index].tool = tool;
+      ops[index].params = { ...params };
       setStep(3);
       document.getElementById('btn-export').disabled = false;
 
