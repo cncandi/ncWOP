@@ -1,117 +1,52 @@
-// simulation.js — Toolpath animation
-
 const Simulation = (() => {
-  let toolMesh = null;
-  let pathPoints = [];
-  let currentIndex = 0;
-  let animFrame = null;
-  let running = false;
-  let speed = 3;
+  let pts=[], idx=0, tool=null, running=false, raf=null, spd=3;
 
-  function init(points, toolDiameter, toolLength) {
+  function init(points, dia, len) {
     stop();
-    pathPoints = points;
-    currentIndex = 0;
-
-    if (toolMesh) Viewer.remove(toolMesh);
-
-    const toolR = toolDiameter / 2;
-    const geo = new THREE.CylinderGeometry(toolR, toolR, toolLength, 32);
-    const mat = new THREE.MeshPhongMaterial({ color: 0xffb300, transparent: true, opacity: 0.85 });
-    toolMesh = new THREE.Mesh(geo, mat);
-
-    const shankGeo = new THREE.CylinderGeometry(toolR * 0.6, toolR * 0.6, toolLength * 0.6, 16);
-    const shankMat = new THREE.MeshPhongMaterial({ color: 0x888888 });
-    const shank = new THREE.Mesh(shankGeo, shankMat);
-    shank.position.y = toolLength * 0.8;
-    toolMesh.add(shank);
-
-    if (pathPoints.length > 0) moveToolTo(0);
-    Viewer.add(toolMesh);
-    updateProgress();
+    pts=points; idx=0;
+    if(tool) Viewer.remove(tool);
+    const r=dia/2;
+    const m = new THREE.Mesh(
+      new THREE.CylinderGeometry(r,r,len,32),
+      new THREE.MeshPhongMaterial({color:0xffb300,transparent:true,opacity:0.85})
+    );
+    const sh = new THREE.Mesh(
+      new THREE.CylinderGeometry(r*.6,r*.6,len*.6,16),
+      new THREE.MeshPhongMaterial({color:0x888888})
+    );
+    sh.position.y = len*.8; m.add(sh);
+    tool=m; moveTo(0); Viewer.add(tool);
   }
 
-  function moveToolTo(index) {
-    if (!toolMesh || pathPoints.length === 0) return;
-    currentIndex = Math.max(0, Math.min(index, pathPoints.length - 1));
-    const p = pathPoints[currentIndex];
-    const h = toolMesh.geometry.parameters.height || 60;
-    toolMesh.position.set(p.x, p.y + h / 2, p.z);
-    updateProgress();
+  function moveTo(i) {
+    idx = Math.max(0, Math.min(i, pts.length-1));
+    if(!tool||!pts[idx]) return;
+    const h=tool.geometry.parameters.height;
+    tool.position.set(pts[idx].x, pts[idx].y+h/2, pts[idx].z);
+    const el=document.getElementById('sim-prog');
+    if(el) el.style.width = (pts.length>1 ? idx/(pts.length-1)*100 : 0)+'%';
   }
 
-  function play() {
-    if (!toolMesh || pathPoints.length === 0) return;
-    if (currentIndex >= pathPoints.length - 1) currentIndex = 0;
-    running = true;
-    animate();
-  }
-
-  function pause() {
-    running = false;
-    if (animFrame) cancelAnimationFrame(animFrame);
-  }
-
-  function stop() {
-    running = false;
-    if (animFrame) cancelAnimationFrame(animFrame);
-    moveToolTo(0);
-  }
-
-  function toStart() {
-    pause();
-    moveToolTo(0);
-    updateButtons();
-  }
-
-  function toEnd() {
-    pause();
-    moveToolTo(pathPoints.length - 1);
-    updateButtons();
-  }
-
-  function stepForward() {
-    pause();
-    moveToolTo(currentIndex + Math.max(1, Math.floor(pathPoints.length / 100)));
-    updateButtons();
-  }
-
-  function stepBackward() {
-    pause();
-    moveToolTo(currentIndex - Math.max(1, Math.floor(pathPoints.length / 100)));
-    updateButtons();
-  }
-
-  function animate() {
-    if (!running) return;
-    for (let i = 0; i < speed; i++) {
-      if (currentIndex >= pathPoints.length - 1) {
-        running = false;
-        updateButtons();
-        return;
-      }
-      currentIndex++;
+  function loop() {
+    if(!running) return;
+    for(let i=0;i<spd;i++) {
+      if(idx>=pts.length-1){running=false;syncBtn();return;}
+      idx++;
     }
-    moveToolTo(currentIndex);
-    animFrame = requestAnimationFrame(animate);
+    moveTo(idx);
+    raf=requestAnimationFrame(loop);
   }
 
-  function setSpeed(val) { speed = val; }
+  function play() { if(!pts.length)return; if(idx>=pts.length-1)idx=0; running=true; loop(); syncBtn(); }
+  function pause() { running=false; if(raf)cancelAnimationFrame(raf); syncBtn(); }
+  function stop()  { pause(); moveTo(0); }
+  function toStart(){ pause(); moveTo(0); }
+  function toEnd()  { pause(); moveTo(pts.length-1); }
+  function stepFwd(){ pause(); moveTo(idx+Math.max(1,Math.floor(pts.length/80))); }
+  function stepBck(){ pause(); moveTo(idx-Math.max(1,Math.floor(pts.length/80))); }
+  function setSpeed(v){ spd=v; }
+  function syncBtn(){ const b=document.getElementById('s-play'); if(b)b.textContent=running?'⏸':'▶'; }
+  function isRunning(){ return running; }
 
-  function updateButtons() {
-    const btn = document.getElementById('btn-sim-play');
-    if (btn) btn.innerHTML = running ? '⏸' : '▶';
-  }
-
-  function updateProgress() {
-    const bar = document.getElementById('sim-progress');
-    if (bar && pathPoints.length > 1) {
-      bar.style.width = ((currentIndex / (pathPoints.length - 1)) * 100) + '%';
-    }
-  }
-
-  function isRunning() { return running; }
-  function isDone() { return currentIndex >= pathPoints.length - 1; }
-
-  return { init, play, pause, stop, toStart, toEnd, stepForward, stepBackward, setSpeed, isRunning, isDone };
+  return { init, play, pause, stop, toStart, toEnd, stepFwd, stepBck, setSpeed, isRunning };
 })();

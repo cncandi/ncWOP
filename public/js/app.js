@@ -1,248 +1,90 @@
-// app.js — Main application controller
-
 document.addEventListener('DOMContentLoaded', () => {
-
   Viewer.init();
-
-  // Ensure panels visible on load with correct widths
-  const shell = document.querySelector('.app-shell');
-  shell.classList.remove('panel-hidden', 'sidebar-hidden');
 
   let blankType = 'box';
   let blankCreated = false;
 
-  // ── Blank type toggle ──
-  document.querySelectorAll('#blank-type-toggle button').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('#blank-type-toggle button').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      blankType = btn.dataset.type;
-      document.getElementById('blank-box-params').style.display = blankType === 'box' ? 'block' : 'none';
-      document.getElementById('blank-cylinder-params').style.display = blankType === 'cylinder' ? 'block' : 'none';
+  // ── Tabs ──
+  document.querySelectorAll('.tab').forEach(t => {
+    t.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(x => x.style.display='none');
+      t.classList.add('active');
+      document.getElementById('tab-'+t.dataset.tab).style.display='block';
     });
   });
 
+  // ── Blank type toggle ──
+  document.getElementById('tb-box').addEventListener('click', () => {
+    blankType='box';
+    document.getElementById('tb-box').classList.add('active');
+    document.getElementById('tb-cyl').classList.remove('active');
+    document.getElementById('blank-box').style.display='block';
+    document.getElementById('blank-cyl').style.display='none';
+  });
+  document.getElementById('tb-cyl').addEventListener('click', () => {
+    blankType='cylinder';
+    document.getElementById('tb-cyl').classList.add('active');
+    document.getElementById('tb-box').classList.remove('active');
+    document.getElementById('blank-box').style.display='none';
+    document.getElementById('blank-cyl').style.display='block';
+  });
+
   // ── Create blank ──
-  document.getElementById('btn-create-blank').addEventListener('click', () => {
-    let params;
-    if (blankType === 'box') {
-      params = {
-        x: parseFloat(document.getElementById('blank-x').value),
-        y: parseFloat(document.getElementById('blank-y').value),
-        z: parseFloat(document.getElementById('blank-z').value),
-      };
-    } else {
-      params = {
-        dia: parseFloat(document.getElementById('blank-dia').value),
-        h: parseFloat(document.getElementById('blank-h').value),
-      };
-    }
-    Blank.create(blankType, params);
+  document.getElementById('btn-blank').addEventListener('click', () => {
+    const p = blankType==='box'
+      ? { x: +document.getElementById('bx').value, y: +document.getElementById('by').value, z: +document.getElementById('bz').value }
+      : { d: +document.getElementById('bd').value, h: +document.getElementById('bh').value };
+    Blank.create(blankType, p);
     blankCreated = true;
-    document.getElementById('section-ops').style.display = 'block';
-    setStep(2);
-    document.getElementById('panel-content').innerHTML = `
-      <div style="color:var(--text-2); font-size:13px;">Rohling erstellt.<br>Operation hinzufügen.</div>
-      <div style="margin-top:12px; padding:10px 12px; background:var(--surface2); border-radius:8px; font-size:12px; color:var(--text-3);">
-        <strong style="color:var(--text-2);">Typ:</strong> ${blankType === 'box' ? 'Box' : 'Zylinder'}<br>
-        ${blankType === 'box'
-          ? `X: ${params.x}mm &nbsp; Y: ${params.y}mm &nbsp; Z: ${params.z}mm`
-          : `⌀: ${params.dia}mm &nbsp; H: ${params.h}mm`}
-      </div>
-    `;
+    // Switch to ops tab hint
+    document.getElementById('panel-body').innerHTML = '<p class="hint">Operation hinzufügen und Unteroperation wählen.</p>';
   });
 
   // ── Add operation ──
   document.getElementById('btn-add-op').addEventListener('click', () => {
-    if (!blankCreated) return;
-    const opIndex = Operations.getAll().length;
-    Operations.addOperation({ type: 'face-milling', tool: {}, params: {}, opStateIndex: -1 });
-    const opList = document.getElementById('op-list');
-    const card = document.createElement('div');
-    card.className = 'op-card active';
-    card.dataset.index = opIndex;
-    card.innerHTML = `<div class="op-card-title">Planfräsen</div><div class="op-card-sub">Parameter eingeben →</div>`;
-    card.addEventListener('click', () => {
-      showOpPanel(opIndex);
-      const ops = Operations.getAll();
-      if (ops[opIndex] && ops[opIndex].opStateIndex >= 0) {
-        Blank.showOpState(ops[opIndex].opStateIndex);
-        Operations.showToolpath(opIndex);
-        // Show sim controls if toolpath exists
-        document.getElementById('sim-controls').style.display = 'flex';
-        document.getElementById('sim-progress').style.width = '0%';
-        document.getElementById('btn-sim-play').innerHTML = '▶';
-      }
-    });
-    opList.appendChild(card);
-    showOpPanel(opIndex);
+    if (!blankCreated) { alert('Bitte zuerst Rohteil erstellen.'); return; }
+    const oi = Operations.addOp();
+    rebuildTree();
+    // Auto-select general of new op
+    selectNode(oi, 'general');
+    // Switch to ops tab
+    document.querySelector('.tab[data-tab="ops"]').click();
   });
 
-  // ── Show operation panel ──
-  function showOpPanel(index) {
-    document.querySelectorAll('.op-card').forEach(c => c.classList.remove('active'));
-    const card = document.querySelector(`.op-card[data-index="${index}"]`);
-    if (card) card.classList.add('active');
-    document.getElementById('panel-content').innerHTML = Operations.renderPanel(index);
-
-    // Wire collapsible group headers
-    document.querySelectorAll('.param-group-header--collapsible').forEach(header => {
-      header.addEventListener('click', () => {
-        const target = document.getElementById(header.dataset.target);
-        if (!target) return;
-        const collapsed = target.style.display === 'none';
-        target.style.display = collapsed ? 'block' : 'none';
-        header.classList.toggle('grp-collapsed', !collapsed);
-      });
-    });
-
-    document.getElementById('btn-calc-toolpath').addEventListener('click', () => {
-      // Use roughing tool diameter/length from tool name (placeholder until tool DB)
-      const tool = { diameter: 16, length: 60 };
-      const params = {
-        safeZ: parseFloat(document.getElementById('op-safeZ')?.value) || 50,
-        refZ:  parseFloat(document.getElementById('op-refZ')?.value)  || 0,
-        dir:   document.getElementById('op-dir')?.value || 'climb',
-        rEnabled: document.getElementById('chk-roughing')?.checked ?? true,
-        rTool: document.getElementById('op-r-tool')?.value || '',
-        rMode: document.getElementById('op-r-mode')?.value || 'parallel',
-        aePct: parseFloat(document.getElementById('op-ae-pct')?.value)  || 45,
-        depth: parseFloat(document.getElementById('op-depth')?.value)    || 5,
-        ap:    parseFloat(document.getElementById('op-ap')?.value)        || 2,
-        ae:    parseFloat(document.getElementById('op-ae')?.value)    || 12,
-        fEnabled: document.getElementById('chk-finishing')?.checked ?? true,
-        fTool: document.getElementById('op-f-tool')?.value || '',
-        fMode: document.getElementById('op-f-mode')?.value || 'traditional',
-        fAePct: parseFloat(document.getElementById('op-f-ae-pct')?.value) || 45,
-        fDepth: parseFloat(document.getElementById('op-f-depth')?.value)  || 5,
-        fAp:    parseFloat(document.getElementById('op-f-ap')?.value)     || 0.5,
-        fAe: parseFloat(document.getElementById('op-f-ae')?.value) || 12,
-        fAllowance: parseFloat(document.getElementById('op-f-allowance')?.value) || 0,
-        cEnabled: document.getElementById('chk-chamfer')?.checked ?? false,
-        cTool: document.getElementById('op-c-tool')?.value || '',
-        cDepth: parseFloat(document.getElementById('op-c-depth')?.value) || 0.5,
-        cSteps: parseInt(document.getElementById('op-c-steps')?.value)   || 1,
-        feed: 800, speed: 3000,
-      };
-      const existingStateIndex = Operations.getAll()[index]?.opStateIndex >= 0
-        ? Operations.getAll()[index].opStateIndex
-        : undefined;
-      const result = Operations.generateFaceMilling({ tool, params }, Blank.getData(), index, existingStateIndex);
-      const ops = Operations.getAll();
-      ops[index].opStateIndex = result.opStateIndex;
-      ops[index].tool = tool;
-      ops[index].params = { ...params };
-      setStep(3);
-      document.getElementById('btn-export').disabled = false;
-
-      // Show simulation controls
-      document.getElementById('sim-controls').style.display = 'flex';
-    });
+  function rebuildTree() {
+    Operations.renderTree((oi, sub) => selectNode(oi, sub));
   }
 
-  // ── Simulation controls ──
-  document.getElementById('btn-sim-play').addEventListener('click', () => {
-    const btn = document.getElementById('btn-sim-play');
-    if (Simulation.isRunning()) {
-      Simulation.pause();
-      btn.innerHTML = '▶';
-    } else {
-      Simulation.play();
-      btn.innerHTML = '⏸';
-      // Auto-reset button when done
-      const check = setInterval(() => {
-        if (!Simulation.isRunning()) { btn.innerHTML = '▶'; clearInterval(check); }
-      }, 200);
-    }
-  });
-
-  document.getElementById('btn-sim-stop').addEventListener('click', () => {
-    Simulation.stop();
-    document.getElementById('btn-sim-play').innerHTML = '▶';
-  });
-
-  document.getElementById('btn-sim-start').addEventListener('click', () => {
-    Simulation.toStart();
-    document.getElementById('btn-sim-play').innerHTML = '▶';
-  });
-
-  document.getElementById('btn-sim-end').addEventListener('click', () => {
-    Simulation.toEnd();
-    document.getElementById('btn-sim-play').innerHTML = '▶';
-  });
-
-  document.getElementById('btn-sim-stepfwd').addEventListener('click', () => {
-    Simulation.stepForward();
-    document.getElementById('btn-sim-play').innerHTML = '▶';
-  });
-
-  document.getElementById('btn-sim-stepback').addEventListener('click', () => {
-    Simulation.stepBackward();
-    document.getElementById('btn-sim-play').innerHTML = '▶';
-  });
-
-  document.getElementById('sim-speed').addEventListener('input', (e) => {
-    Simulation.setSpeed(parseInt(e.target.value));
-  });
+  function selectNode(oi, sub) {
+    Operations.setSelected(oi, sub);
+    Operations.renderPanel(oi, sub, (calcOi) => {
+      Operations.generateFaceMilling(calcOi);
+      rebuildTree();
+    });
+    // Show toolpath if exists
+    if (sub === 'roughing') Operations.showToolpath(oi);
+  }
 
   // ── Viewport buttons ──
-  document.getElementById('btn-view-top').addEventListener('click', () => Viewer.setView('top'));
-  document.getElementById('btn-view-iso').addEventListener('click', () => Viewer.setView('iso'));
-  document.getElementById('btn-view-front').addEventListener('click', () => Viewer.setView('front'));
+  document.getElementById('v-top').addEventListener('click',   () => Viewer.setView('top'));
+  document.getElementById('v-iso').addEventListener('click',   () => Viewer.setView('iso'));
+  document.getElementById('v-front').addEventListener('click', () => Viewer.setView('front'));
+
+  // ── Simulation ──
+  document.getElementById('s-play').addEventListener('click', () => {
+    Simulation.isRunning() ? Simulation.pause() : Simulation.play();
+  });
+  document.getElementById('s-stop').addEventListener('click',  () => Simulation.stop());
+  document.getElementById('s-start').addEventListener('click', () => Simulation.toStart());
+  document.getElementById('s-end').addEventListener('click',   () => Simulation.toEnd());
+  document.getElementById('s-fwd').addEventListener('click',   () => Simulation.stepFwd());
+  document.getElementById('s-back').addEventListener('click',  () => Simulation.stepBck());
+  document.getElementById('sim-speed').addEventListener('input', e => Simulation.setSpeed(+e.target.value));
 
   // ── Reset ──
   document.getElementById('btn-reset').addEventListener('click', () => location.reload());
 
-  // ── Export placeholder ──
-  document.getElementById('btn-export').addEventListener('click', () => {
-    alert('G-Code Export folgt in nächster Version.');
-  });
-
-  // ── Step indicator ──
-  function setStep(active) {
-    for (let i = 1; i <= 3; i++) {
-      const el = document.getElementById(`step-${i}`);
-      el.classList.remove('active', 'done');
-      if (i < active) el.classList.add('done');
-      else if (i === active) el.classList.add('active');
-    }
-  }
-
-  // ── Panel resize & collapse ──
-
-
-
-
-  // ── ae % → mm live update ──
-  window.updateAeMm = function(type) {
-    if (type === 'r') {
-      const pct = parseFloat(document.getElementById('op-ae-pct')?.value) || 45;
-      const dia = parseFloat(document.getElementById('op-r-tool')?.value.match(/D(\d+)/)?.[1]) || 16;
-      const mm = (pct / 100 * dia).toFixed(1);
-      const el = document.getElementById('op-ae-mm-r');
-      if (el) el.textContent = mm + ' mm';
-    } else {
-      const pct = parseFloat(document.getElementById('op-f-ae-pct')?.value) || 45;
-      const dia = parseFloat(document.getElementById('op-f-tool')?.value.match(/D(\d+)/)?.[1]) || 16;
-      const mm = (pct / 100 * dia).toFixed(1);
-      const el = document.getElementById('op-ae-mm-f');
-      if (el) el.textContent = mm + ' mm';
-    }
-  };
-
-  // ── depth / ap → steps live update ──
-  window.updateSteps = function(type) {
-    if (type === 'r') {
-      const depth = parseFloat(document.getElementById('op-depth')?.value) || 5;
-      const ap    = parseFloat(document.getElementById('op-ap')?.value)    || 2;
-      const el = document.getElementById('op-steps-r');
-      if (el) el.textContent = Math.ceil(depth / ap) + ' Schr.';
-    } else {
-      const depth = parseFloat(document.getElementById('op-f-depth')?.value) || 5;
-      const ap    = parseFloat(document.getElementById('op-f-ap')?.value)    || 0.5;
-      const el = document.getElementById('op-steps-f');
-      if (el) el.textContent = Math.ceil(depth / ap) + ' Schr.';
-    }
-  };
-
+  // ── Export ──
+  document.getElementById('btn-export').addEventListener('click', () => alert('G-Code Export folgt.'));
 });

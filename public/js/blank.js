@@ -1,116 +1,37 @@
-// blank.js — Rohling with per-operation states
-
 const Blank = (() => {
-  let originalParams = null;
-  let blankType = null;
+  let type=null, orig=null, cur=null;
+  const states = [];
 
-  // All meshes currently in scene
-  let activeMesh = null;
-
-  // Per-operation resulting params: [{ z/h after op }]
-  const opStates = [];
-
-  function buildMesh(type, params, color, opacity) {
-    let geometry;
-    if (type === 'box') {
-      geometry = new THREE.BoxGeometry(params.x, params.z, params.y);
-    } else {
-      geometry = new THREE.CylinderGeometry(params.dia / 2, params.dia / 2, params.h, 64);
-    }
-    const mat = new THREE.MeshPhongMaterial({ color, transparent: true, opacity, side: THREE.DoubleSide });
-    const mesh = new THREE.Mesh(geometry, mat);
-    mesh.position.y = (type === 'box' ? params.z : params.h) / 2;
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-    const wm = new THREE.Mesh(geometry.clone(),
-      new THREE.MeshBasicMaterial({ color: 0x5580aa, wireframe: true, opacity: 0.12, transparent: true }));
-    mesh.add(wm);
-    return mesh;
+  function mkMesh(t, p, color) {
+    const geo = t==='box'
+      ? new THREE.BoxGeometry(p.x, p.z, p.y)
+      : new THREE.CylinderGeometry(p.d/2, p.d/2, p.h, 64);
+    const m = new THREE.Mesh(geo, new THREE.MeshPhongMaterial({color, transparent:true, opacity:0.82}));
+    m.position.y = (t==='box' ? p.z : p.h) / 2;
+    m.castShadow = true;
+    m.add(new THREE.Mesh(geo.clone(), new THREE.MeshBasicMaterial({color:0x5580aa,wireframe:true,transparent:true,opacity:0.1})));
+    return m;
   }
 
-  function setMesh(mesh) {
-    if (activeMesh) Viewer.remove(activeMesh);
-    activeMesh = mesh;
-    Viewer.add(activeMesh);
+  function show(m) { if(cur) Viewer.remove(cur); cur=m; Viewer.add(cur); }
+
+  function create(t, p) {
+    type=t; orig={...p}; states.length=0;
+    show(mkMesh(t, p, 0xc8d8e8));
   }
 
-  function create(type, params) {
-    blankType = type;
-    originalParams = { ...params };
-    opStates.length = 0;
-    setMesh(buildMesh(type, params, 0xc8d8e8, 0.85));
-    return activeMesh;
+  function setOpState(idx, ap) {
+    const prev = idx===0 ? {...orig} : {...(states[idx-1]||orig)};
+    const next = {...prev};
+    if (type==='box') next.z = Math.max(1, prev.z - ap);
+    else next.h = Math.max(1, prev.h - ap);
+    states[idx] = next;
   }
 
-  // Called after calculating an operation
-  // index = existing op index (recalculate), undefined = new op
-  function addOpState(ap, index) {
-    const isNew = index === undefined;
-    const targetIndex = isNew ? opStates.length : index;
-    const prevParams = targetIndex === 0 ? { ...originalParams } : { ...(opStates[targetIndex - 1] || originalParams) };
-
-    const next = { ...prevParams };
-    if (blankType === 'box') {
-      next.z = Math.max(1, prevParams.z - ap);
-    } else {
-      next.h = Math.max(1, prevParams.h - ap);
-    }
-
-    if (isNew) {
-      opStates.push(next);
-    } else {
-      opStates[targetIndex] = next;
-      // Recalculate all subsequent ops with same ap (they depend on this state)
-      for (let i = targetIndex + 1; i < opStates.length; i++) {
-        const p = opStates[i - 1];
-        const n = { ...p };
-        if (blankType === 'box') n.z = Math.max(1, p.z - ap);
-        else n.h = Math.max(1, p.h - ap);
-        opStates[i] = n;
-      }
-    }
-    return targetIndex;
+  function showOp(idx) {
+    if (states[idx]) show(mkMesh(type, states[idx], 0xb8e0c8));
   }
 
-  // Update state for existing op index (recalculate)
-  function updateOpState(index, ap) {
-    const prev = index > 0 ? opStates[index - 1] : { ...originalParams };
-    const next = { ...prev };
-    if (blankType === 'box') {
-      next.z = Math.max(1, prev.z - ap);
-    } else {
-      next.h = Math.max(1, prev.h - ap);
-    }
-    opStates[index] = next;
-    // Recalculate all subsequent states
-    for (let i = index + 1; i < opStates.length; i++) {
-      const p = opStates[i - 1];
-      const n = { ...p };
-      if (blankType === 'box') n.z = Math.max(1, p.z - ap);
-      else n.h = Math.max(1, p.h - ap);
-      opStates[i] = n;
-    }
-  }
-
-  function showBefore() { /* disabled */ }
-
-  function showAfter() {
-    if (opStates.length === 0) return;
-    showOpState(opStates.length - 1);
-  }
-
-  // Show the "after" state for a specific operation index
-  function showOpState(index) {
-    if (index < 0 || index >= opStates.length) return;
-    setMesh(buildMesh(blankType, opStates[index], 0xb8e0c8, 0.85));
-  }
-
-  function getData() {
-    return { type: blankType, params: originalParams };
-  }
-
-  function getOpCount() { return opStates.length; }
-  function hasAfter() { return opStates.length > 0; }
-
-  return { create, addOpState, updateOpState, showBefore, showAfter, showOpState, getData, getOpCount, hasAfter };
+  function getData() { return {type, params: orig}; }
+  return { create, setOpState, showOp, getData };
 })();

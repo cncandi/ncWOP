@@ -1,298 +1,322 @@
-// operations.js — CAM operations
-
+// operations.js — stores ops, generates toolpaths, renders panel
 const Operations = (() => {
-  const ops = [];
-  // Per-op stored toolpath line objects and points
-  const opToolpaths = {}; // index -> { lineObj, points, tool }
-  let activeIndex = -1;
+  const ops = []; // [{params, subops:{roughing,finishing,chamfer}, toolpaths, stateIdx}]
+  let activeOpIdx = -1;
+  let activeSubop = null; // 'roughing'|'finishing'|'chamfer'|'general'
+  const toolpathLines = {};
 
-  function hideAllToolpaths() {
-    Object.values(opToolpaths).forEach(t => {
-      if (t.lineObj) t.lineObj.visible = false;
+  /* ── default params ── */
+  function defaultParams() {
+    return {
+      safeZ: 50, refZ: 0, dir: 'climb',
+      roughing: { enabled:true, tool:'T1 D16mm', mode:'parallel', aePct:45, depth:5, ap:2 },
+      finishing: { enabled:true, tool:'T1 D16mm', mode:'parallel', aePct:45, depth:5, ap:0.5, allowance:0 },
+      chamfer:   { enabled:false, tool:'T2 D16mm 45°', depth:0.5, steps:1 }
+    };
+  }
+
+  function addOp() {
+    ops.push({ params: defaultParams(), stateIdx: -1 });
+    return ops.length - 1;
+  }
+
+  function getOps() { return ops; }
+
+  /* ── toolpath generation ── */
+  function generateFaceMilling(opIdx) {
+    const op = ops[opIdx];
+    const r = op.params.roughing;
+    const blank = Blank.getData();
+    const bp = blank.params;
+    const toolDia = parseFloat((r.tool.match(/D(\d+)/)||[])[1]) || 16;
+    const ae = (r.aePct/100) * toolDia;
+    const ap = r.ap;
+    const depth = r.depth;
+    const toolR = toolDia/2;
+    const x = bp.x || bp.d;
+    const y = bp.y || bp.d;
+    const z = bp.z || bp.h;
+    const startZ = z - Math.min(ap, depth);
+    const x0 = -(x/2)-toolR, x1 = (x/2)+toolR;
+
+    const pts = [];
+    let cy = -(y/2)-toolR, dir = 1;
+    while (cy <= (y/2)+toolR) {
+      const fx = dir>0?x0:x1, tx = dir>0?x1:x0;
+      for(let i=0;i<=50;i++) pts.push(new THREE.Vector3(fx+(tx-fx)*(i/50), startZ, cy));
+      cy += ae; dir *= -1;
+    }
+
+    // Remove old line
+    if (toolpathLines[opIdx]) Viewer.remove(toolpathLines[opIdx]);
+    // Hide all other lines
+    Object.values(toolpathLines).forEach(l => { if(l) l.visible=false; });
+
+    const line = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints(pts),
+      new THREE.LineBasicMaterial({color:0x0057ff})
+    );
+    Viewer.add(line);
+    toolpathLines[opIdx] = line;
+
+    // Update blank state
+    Blank.setOpState(opIdx, ap);
+    Blank.showOp(opIdx);
+    op.stateIdx = opIdx;
+
+    // Init simulation
+    Simulation.init(pts, toolDia, 60);
+    document.getElementById('sim-bar').style.display = 'flex';
+  }
+
+  function showToolpath(opIdx) {
+    Object.values(toolpathLines).forEach(l => { if(l) l.visible=false; });
+    if (toolpathLines[opIdx]) {
+      toolpathLines[opIdx].visible = true;
+      const op = ops[opIdx];
+      const r = op.params.roughing;
+      const toolDia = parseFloat((r.tool.match(/D(\d+)/)||[])[1]) || 16;
+      const pts = toolpathLines[opIdx].geometry.attributes.position;
+      const arr = [];
+      for(let i=0;i<pts.count;i++) arr.push(new THREE.Vector3(pts.getX(i),pts.getY(i),pts.getZ(i)));
+      Simulation.init(arr, toolDia, 60);
+      document.getElementById('sim-bar').style.display = 'flex';
+    }
+    if (op && op.stateIdx >= 0) Blank.showOp(opIdx);
+  }
+
+  /* ── tree rendering ── */
+  function renderTree(onSelect) {
+    const tree = document.getElementById('op-tree');
+    tree.innerHTML = '';
+    ops.forEach((op, oi) => {
+      const r = op.params.roughing, f = op.params.finishing, c = op.params.chamfer;
+      const wrap = document.createElement('div');
+      wrap.className = 'tree-op';
+      wrap.innerHTML = `
+        <div class="tree-op-header" data-oi="${oi}">
+          <span class="tree-op-chevron open">▶</span>
+          <span class="tree-op-icon">◧</span>
+          <span class="tree-op-name">Planfräsen ${oi+1}</span>
+        </div>
+        <div class="tree-op-body open">
+          <div class="tree-sub" data-oi="${oi}" data-sub="general">
+            <span class="tree-sub-icon">⚙</span>
+            <span class="tree-sub-name">Allgemein</span>
+          </div>
+          <div class="tree-sub ${r.enabled?'':'disabled'}" data-oi="${oi}" data-sub="roughing">
+            <span class="tree-sub-icon">≡</span>
+            <span class="tree-sub-name">Schruppen</span>
+            <span class="tree-sub-tool">${r.tool}</span>
+          </div>
+          <div class="tree-sub ${f.enabled?'':'disabled'}" data-oi="${oi}" data-sub="finishing">
+            <span class="tree-sub-icon">✎</span>
+            <span class="tree-sub-name">Schlichten</span>
+            <span class="tree-sub-tool">${f.tool}</span>
+          </div>
+          <div class="tree-sub ${c.enabled?'':'disabled'}" data-oi="${oi}" data-sub="chamfer">
+            <span class="tree-sub-icon">◿</span>
+            <span class="tree-sub-name">Kanten brechen</span>
+            <span class="tree-sub-tool">${c.tool}</span>
+          </div>
+        </div>
+      `;
+
+      // Op header click = collapse/expand
+      wrap.querySelector('.tree-op-header').addEventListener('click', function() {
+        const body = wrap.querySelector('.tree-op-body');
+        const chev = wrap.querySelector('.tree-op-chevron');
+        const open = body.classList.toggle('open');
+        chev.classList.toggle('open', open);
+        // Also select general
+        onSelect(oi, 'general');
+      });
+
+      // Sub-op clicks
+      wrap.querySelectorAll('.tree-sub').forEach(sub => {
+        sub.addEventListener('click', e => {
+          e.stopPropagation();
+          onSelect(parseInt(sub.dataset.oi), sub.dataset.sub);
+        });
+      });
+
+      tree.appendChild(wrap);
     });
   }
 
-  function showToolpath(index) {
-    hideAllToolpaths();
-    if (opToolpaths[index]) {
-      opToolpaths[index].lineObj.visible = true;
-      // Re-init simulation with this op's points/tool
-      const { points, tool } = opToolpaths[index];
-      Simulation.init(points, tool.diameter, tool.length);
+  function setSelected(oi, sub) {
+    activeOpIdx = oi; activeSubop = sub;
+    document.querySelectorAll('.tree-op-header, .tree-sub').forEach(el => el.classList.remove('selected'));
+    if (sub === 'general') {
+      const hd = document.querySelector(`.tree-op-header[data-oi="${oi}"]`);
+      if(hd) hd.classList.add('selected');
+    } else {
+      const el = document.querySelector(`.tree-sub[data-oi="${oi}"][data-sub="${sub}"]`);
+      if(el) el.classList.add('selected');
     }
   }
 
-  function generateFaceMilling(op, blankData, opIndex, existingStateIndex) {
-    const { tool, params } = op;
-    const blank = blankData.params;
-    const toolDia = tool.diameter;
-    const ae = ((params.aePct || 45) / 100) * toolDia;
-    const ap = params.ap || 2;
-    const depth = params.depth || 5;
-    const toolR = toolDia / 2;
+  /* ── panel rendering ── */
+  function renderPanel(oi, sub, onCalc) {
+    const panel = document.getElementById('panel-body');
+    const op = ops[oi];
+    const p = op.params;
 
-    let x = blank.x || blank.dia;
-    let y = blank.y || blank.dia;
-    const z = blank.z || blank.h;
-    const startZ = z - Math.min(ap, depth); // first pass
-    const startX = -(x / 2) - toolR;
-    const endX   = (x / 2) + toolR;
+    let html = `<div class="p-op-title">
+      <span class="p-op-title-text">Planfräsen ${oi+1} — ${subLabel(sub)}</span>
+      ${sub==='roughing'||sub==='finishing' ? `<button class="btn btn-primary btn-sm" id="btn-calc">▶ Berechnen</button>` : ''}
+    </div>`;
 
-    const points = [];
-    let currentY = -(y / 2) - toolR;
-    let dir = 1;
-
-    while (currentY <= (y / 2) + toolR) {
-      const fromX = dir > 0 ? startX : endX;
-      const toX   = dir > 0 ? endX   : startX;
-      const steps = 40;
-      for (let i = 0; i <= steps; i++) {
-        points.push(new THREE.Vector3(
-          fromX + (toX - fromX) * (i / steps),
-          startZ,
-          currentY
-        ));
-      }
-      currentY += ae;
-      dir *= -1;
+    if (sub === 'general') {
+      html += group('Allgemein', [
+        row('Safe Z',       ctrl(p.safeZ, 'safeZ', 'mm')),
+        row('Referenz Z',   ctrl(p.refZ, 'refZ', 'mm')),
+        row('Fräsrichtung', sel(p.dir, 'dir', ['climb:Gleichlauf','conventional:Gegenlauf','auto:Auto'])),
+      ]);
     }
 
-    // Remove old line for this op if exists
-    if (opToolpaths[opIndex] && opToolpaths[opIndex].lineObj) {
-      Viewer.remove(opToolpaths[opIndex].lineObj);
+    if (sub === 'roughing') {
+      const r = p.roughing;
+      const dia = parseFloat((r.tool.match(/D(\d+)/)||[])[1]) || 16;
+      const aeMm = ((r.aePct||45)/100*dia).toFixed(1);
+      const steps = Math.ceil((r.depth||5)/(r.ap||2));
+      html += group('Schruppen', [
+        rowChk('Aktiv', 'r-enabled', r.enabled),
+        row('Werkzeug',      `<input class="p-control" style="border:1px solid var(--border);border-radius:var(--radius);height:26px;padding:0 8px;font-size:12px;width:130px;" id="r-tool" value="${r.tool}">`),
+        row('Modus',         sel(r.mode, 'r-mode', ['parallel:Parallel','contour:Konturparallel','spiral:Spiralförmig'])),
+        row('Seitl. Zust. ae', `<div class="p-control"><input type="number" id="r-ae-pct" value="${r.aePct||45}" min="1" max="100" step="1" oninput="ncwop_updateAe('r')"><span class="unit">%</span></div><span class="p-hint" id="r-ae-mm">${aeMm} mm</span>`),
+        row('Gesamttiefe',   ctrl(r.depth||5, 'r-depth', 'mm', 'r')),
+        row('Tiefenzust. ap',`<div class="p-control"><input type="number" id="r-ap" value="${r.ap||2}" min="0.1" step="0.1" oninput="ncwop_updateSteps('r')"></div><span class="p-hint" id="r-steps">${steps} Schr.</span>`),
+      ]);
     }
 
-    // Draw line
-    const geo = new THREE.BufferGeometry().setFromPoints(points);
-    const mat = new THREE.LineBasicMaterial({ color: 0x0057ff });
-    const lineObj = new THREE.Line(geo, mat);
-    Viewer.add(lineObj);
+    if (sub === 'finishing') {
+      const f = p.finishing;
+      const dia = parseFloat((f.tool.match(/D(\d+)/)||[])[1]) || 16;
+      const aeMm = ((f.aePct||45)/100*dia).toFixed(1);
+      const steps = Math.ceil((f.depth||5)/(f.ap||0.5));
+      html += group('Schlichten', [
+        rowChk('Aktiv', 'f-enabled', f.enabled),
+        row('Werkzeug',      `<input class="p-control" style="border:1px solid var(--border);border-radius:var(--radius);height:26px;padding:0 8px;font-size:12px;width:130px;" id="f-tool" value="${f.tool}">`),
+        row('Modus',         sel(f.mode, 'f-mode', ['parallel:Parallel','contour:Konturparallel','spiral:Spiralförmig'])),
+        row('Seitl. Zust. ae', `<div class="p-control"><input type="number" id="f-ae-pct" value="${f.aePct||45}" min="1" max="100" step="1" oninput="ncwop_updateAe('f')"><span class="unit">%</span></div><span class="p-hint" id="f-ae-mm">${aeMm} mm</span>`),
+        row('Gesamttiefe',   ctrl(f.depth||5, 'f-depth', 'mm', 'f')),
+        row('Tiefenzust. ap',`<div class="p-control"><input type="number" id="f-ap" value="${f.ap||0.5}" min="0.1" step="0.1" oninput="ncwop_updateSteps('f')"></div><span class="p-hint" id="f-steps">${steps} Schr.</span>`),
+        row('Aufmaß',        ctrl(f.allowance||0, 'f-allowance', 'mm')),
+      ]);
+    }
 
-    // Hide all others, show this one
-    hideAllToolpaths();
-    opToolpaths[opIndex] = { lineObj, points, tool };
-    activeIndex = opIndex;
+    if (sub === 'chamfer') {
+      const c = p.chamfer;
+      html += group('Kanten brechen', [
+        rowChk('Aktiv', 'c-enabled', c.enabled),
+        row('Werkzeug',      `<input class="p-control" style="border:1px solid var(--border);border-radius:var(--radius);height:26px;padding:0 8px;font-size:12px;width:130px;" id="c-tool" value="${c.tool}">`),
+        row('Fasentiefe',    ctrl(c.depth||0.5, 'c-depth', 'mm')),
+        row('Schritte',      ctrl(c.steps||1, 'c-steps', '')),
+      ]);
+    }
 
-    // Store op state in blank — update if recalculating, append if new
-    const opStateIndex = Blank.addOpState(ap, existingStateIndex);
+    panel.innerHTML = html;
 
-    // Init simulation
-    Simulation.init(points, tool.diameter, tool.length);
+    // Berechnen button
+    const calcBtn = document.getElementById('btn-calc');
+    if (calcBtn) calcBtn.addEventListener('click', () => { saveParams(oi, sub); onCalc(oi); });
 
-    return { points, opStateIndex };
+    // Collapsible groups
+    panel.querySelectorAll('.p-group-hd').forEach(hd => {
+      hd.addEventListener('click', () => {
+        const body = hd.nextElementSibling;
+        const collapsed = body.style.display === 'none';
+        body.style.display = collapsed ? 'block' : 'none';
+        hd.classList.toggle('collapsed', !collapsed);
+      });
+    });
   }
 
-  function addOperation(op) { ops.push(op); }
-  function getAll() { return ops; }
+  function saveParams(oi, sub) {
+    const op = ops[oi]; const p = op.params;
+    const v = id => { const el=document.getElementById(id); return el?el.value:null; };
+    const n = id => { const el=document.getElementById(id); return el?parseFloat(el.value):null; };
+    const b = id => { const el=document.getElementById(id); return el?el.checked:null; };
 
-  function renderPanel(opIndex) {
-    const op = ops[opIndex];
-    const p = op && op.params ? op.params : {};
-
-    // Defaults
-    const safeZ    = p.safeZ    ?? 50;
-    const refZ     = p.refZ     ?? 0;
-    const dir      = p.dir      ?? 'climb';
-
-    // Schruppen
-    const rEnabled = p.rEnabled ?? true;
-    const rTool    = p.rTool    ?? 'T1 D16mm';
-    const rMode    = p.rMode    ?? 'parallel';
-    const rAp      = p.rAp     ?? 2;
-    const rAe      = p.rAe     ?? 12;
-
-    // Schlichten
-    const fEnabled = p.fEnabled ?? true;
-    const fTool    = p.fTool    ?? 'T1 D16mm';
-    const fMode    = p.fMode    ?? 'traditional';
-    const fAllowance = p.fAllowance ?? 0;
-
-    // Kanten brechen
-    const cEnabled = p.cEnabled ?? false;
-    const cTool    = p.cTool    ?? 'T2 D16mm 45°';
-    const cDepth   = p.cDepth   ?? 0.5;
-    const cSteps   = p.cSteps   ?? 1;
-
-    return `
-      <div class="param-section-title">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="8" y1="21" x2="16" y2="21"/></svg>
-        Planfräsen
-        <button class="btn btn-primary btn-sm" id="btn-calc-toolpath" style="margin-left:auto; gap:4px;">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-          Berechnen
-        </button>
-      </div>
-
-      <!-- Allgemein -->
-      <div class="param-group">
-        <div class="param-group-header">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3"/></svg>
-          &nbsp;Allgemein
-        </div>
-        <div class="param-row">
-          <span class="param-row-label">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" style="margin-right:4px;vertical-align:middle"><path d="M12 2v20M8 18l4 4 4-4"/></svg>
-            Safe Z
-          </span>
-          <div class="form-control-unit param-row-input">
-            <input type="number" id="op-safeZ" value="${safeZ}" min="0">
-            <span class="unit-badge">mm</span>
-          </div>
-        </div>
-        <div class="param-row">
-          <span class="param-row-label">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="2.5" style="margin-right:4px;vertical-align:middle"><path d="M5 12h14"/></svg>
-            Referenz Z
-          </span>
-          <div class="form-control-unit param-row-input">
-            <input type="number" id="op-refZ" value="${refZ}">
-            <span class="unit-badge">mm</span>
-          </div>
-        </div>
-        <div class="param-row">
-          <span class="param-row-label">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="2.5" style="margin-right:4px;vertical-align:middle"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-            Fräsrichtung
-          </span>
-          <select id="op-dir" class="form-control" style="height:26px; font-size:12px; width:100px;">
-            <option value="climb" ${dir==='climb'?'selected':''}>Gleichlauf</option>
-            <option value="conventional" ${dir==='conventional'?'selected':''}>Gegenlauf</option>
-            <option value="auto" ${dir==='auto'?'selected':''}>Auto</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Schruppen -->
-      <div class="param-group">
-        <div class="param-group-header param-group-header--collapsible" data-target="grp-roughing">
-          <input type="checkbox" id="chk-roughing" ${rEnabled?'checked':''} style="margin-right:6px; accent-color:var(--accent);" onclick="event.stopPropagation()">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:5px"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
-          Schruppen
-          <span class="grp-chevron" style="margin-left:auto;">▾</span>
-        </div>
-        <div id="grp-roughing">
-          <div class="param-row">
-            <span class="param-row-label">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" style="margin-right:4px;vertical-align:middle"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-              Werkzeug
-            </span>
-            <input type="text" id="op-r-tool" value="${rTool}" class="form-control" style="width:110px; height:26px; font-size:12px;">
-          </div>
-          <div class="param-row">
-            <span class="param-row-label">Modus</span>
-            <select id="op-r-mode" class="form-control" style="height:26px; font-size:12px; width:100px;">
-              <option value="parallel" ${rMode==='parallel'?'selected':''}>Parallel</option>
-              <option value="contour" ${rMode==='contour'?'selected':''}>Konturparallel</option>
-              <option value="spiral" ${rMode==='spiral'?'selected':''}>Spiralförmig</option>
-            </select>
-          </div>
-          <div class="param-row">
-            <span class="param-row-label">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" style="margin-right:4px;vertical-align:middle"><path d="M2 12h20M18 8l4 4-4 4"/></svg>
-              Seitl. Zust. ae
-            </span>
-            <div style="display:flex; gap:4px; align-items:center;">
-              <div class="form-control-unit" style="width:80px;">
-                <input type="number" id="op-ae-pct" value="${p.aePct ?? 45}" min="1" max="100" step="1" oninput="updateAeMm('r')">
-                <span class="unit-badge">%</span>
-              </div>
-              <span id="op-ae-mm-r" style="font-size:11px; color:var(--text-3); white-space:nowrap;">${((p.aePct??45)/100*(p.rToolDia??16)).toFixed(1)} mm</span>
-            </div>
-          </div>
-          <div class="param-row">
-            <span class="param-row-label">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" style="margin-right:4px;vertical-align:middle"><path d="M12 2v20M8 18l4 4 4-4"/></svg>
-              Gesamttiefe
-            </span>
-            <div class="form-control-unit param-row-input">
-              <input type="number" id="op-depth" value="${p.depth ?? 5}" min="0.1" step="0.1" oninput="updateSteps('r')">
-              <span class="unit-badge">mm</span>
-            </div>
-          </div>
-          <div class="param-row">
-            <span class="param-row-label">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" style="margin-right:4px;vertical-align:middle"><path d="M12 2v20M8 18l4 4 4-4"/></svg>
-              Tiefenzust. ap
-            </span>
-            <div style="display:flex; gap:4px; align-items:center;">
-              <div class="form-control-unit" style="width:80px;">
-                <input type="number" id="op-ap" value="${rAp}" min="0.1" step="0.1" oninput="updateSteps('r')">
-                <span class="unit-badge">mm</span>
-              </div>
-              <span id="op-steps-r" style="font-size:11px; color:var(--text-3); white-space:nowrap;">${Math.ceil((p.depth??5)/(p.rAp??2))} Schr.</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Schlichten -->
-      <div class="param-group">
-        <div class="param-group-header param-group-header--collapsible" data-target="grp-finishing">
-          <input type="checkbox" id="chk-finishing" ${fEnabled?'checked':''} style="margin-right:6px; accent-color:var(--accent);" onclick="event.stopPropagation()">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:5px"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-          Schlichten
-          <span class="grp-chevron" style="margin-left:auto;">▾</span>
-        </div>
-        <div id="grp-finishing">
-          <div class="param-row">
-            <span class="param-row-label">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" style="margin-right:4px;vertical-align:middle"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-              Werkzeug
-            </span>
-            <input type="text" id="op-f-tool" value="${fTool}" class="form-control" style="width:110px; height:26px; font-size:12px;">
-          </div>
-          <div class="param-row">
-            <span class="param-row-label">Modus</span>
-            <select id="op-f-mode" class="form-control" style="height:26px; font-size:12px; width:100px;">
-              <option value="traditional" ${fMode==='traditional'?'selected':''}>Traditional</option>
-              <option value="climb" ${fMode==='climb'?'selected':''}>Gleichlauf</option>
-            </select>
-          </div>
-          <div class="param-row">
-            <span class="param-row-label">Aufmaß</span>
-            <div class="form-control-unit param-row-input">
-              <input type="number" id="op-f-allowance" value="${fAllowance}" min="0" step="0.1">
-              <span class="unit-badge">mm</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Kanten brechen -->
-      <div class="param-group">
-        <div class="param-group-header param-group-header--collapsible" data-target="grp-chamfer">
-          <input type="checkbox" id="chk-chamfer" ${cEnabled?'checked':''} style="margin-right:6px; accent-color:var(--accent);" onclick="event.stopPropagation()">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:5px"><path d="M3 21l18-18M9 3h12v12"/></svg>
-          Kanten brechen
-          <span class="grp-chevron" style="margin-left:auto;">▾</span>
-        </div>
-        <div id="grp-chamfer">
-          <div class="param-row">
-            <span class="param-row-label">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" style="margin-right:4px;vertical-align:middle"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-              Werkzeug
-            </span>
-            <input type="text" id="op-c-tool" value="${cTool}" class="form-control" style="width:110px; height:26px; font-size:12px;">
-          </div>
-          <div class="param-row">
-            <span class="param-row-label">Fasentiefe</span>
-            <div class="form-control-unit param-row-input">
-              <input type="number" id="op-c-depth" value="${cDepth}" min="0.1" step="0.1">
-              <span class="unit-badge">mm</span>
-            </div>
-          </div>
-          <div class="param-row">
-            <span class="param-row-label">Anzahl Schritte</span>
-            <div class="form-control-unit param-row-input">
-              <input type="number" id="op-c-steps" value="${cSteps}" min="1" step="1">
-              <span class="unit-badge"></span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-
-    `;
+    if (sub==='general') {
+      p.safeZ = n('safeZ')||50;
+      p.refZ  = n('refZ')||0;
+      p.dir   = v('dir')||'climb';
+    }
+    if (sub==='roughing') {
+      p.roughing.enabled = b('r-enabled')??true;
+      p.roughing.tool    = v('r-tool')||p.roughing.tool;
+      p.roughing.mode    = v('r-mode')||'parallel';
+      p.roughing.aePct   = n('r-ae-pct')||45;
+      p.roughing.depth   = n('r-depth')||5;
+      p.roughing.ap      = n('r-ap')||2;
+    }
+    if (sub==='finishing') {
+      p.finishing.enabled   = b('f-enabled')??true;
+      p.finishing.tool      = v('f-tool')||p.finishing.tool;
+      p.finishing.mode      = v('f-mode')||'parallel';
+      p.finishing.aePct     = n('f-ae-pct')||45;
+      p.finishing.depth     = n('f-depth')||5;
+      p.finishing.ap        = n('f-ap')||0.5;
+      p.finishing.allowance = n('f-allowance')||0;
+    }
+    if (sub==='chamfer') {
+      p.chamfer.enabled = b('c-enabled')??false;
+      p.chamfer.tool    = v('c-tool')||p.chamfer.tool;
+      p.chamfer.depth   = n('c-depth')||0.5;
+      p.chamfer.steps   = n('c-steps')||1;
+    }
   }
-  return { addOperation, getAll, generateFaceMilling, renderPanel, showToolpath, hideAllToolpaths };
+
+  /* helpers */
+  function subLabel(s) { return {general:'Allgemein',roughing:'Schruppen',finishing:'Schlichten',chamfer:'Kanten brechen'}[s]||s; }
+
+  function group(title, rows) {
+    return `<div class="p-group">
+      <div class="p-group-hd">${title}<span class="chev">▾</span></div>
+      <div class="p-group-body">${rows.join('')}</div>
+    </div>`;
+  }
+
+  function row(label, control) {
+    return `<div class="p-row"><span class="p-label">${label}</span>${control}</div>`;
+  }
+
+  function rowChk(label, id, checked) {
+    return `<div class="p-row"><span class="p-label">${label}</span>
+      <input type="checkbox" id="${id}" ${checked?'checked':''} style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer;">
+    </div>`;
+  }
+
+  function ctrl(val, id, unit, upd) {
+    const oi = upd ? `oninput="ncwop_updateSteps('${upd}')"` : '';
+    return `<div class="p-control"><input type="number" id="${id}" value="${val}" step="0.1" ${oi}>${unit?`<span class="unit">${unit}</span>`:''}</div>`;
+  }
+
+  function sel(val, id, opts) {
+    const options = opts.map(o => { const [v,l]=o.split(':'); return `<option value="${v}" ${val===v?'selected':''}>${l}</option>`; }).join('');
+    return `<div class="p-control"><select id="${id}">${options}</select></div>`;
+  }
+
+  return { addOp, getOps, generateFaceMilling, showToolpath, renderTree, renderPanel, setSelected, saveParams };
 })();
+
+// Global helpers for oninput handlers
+window.ncwop_updateAe = function(type) {
+  const pctEl = document.getElementById(type+'-ae-pct');
+  const toolEl = document.getElementById(type+'-tool');
+  if (!pctEl) return;
+  const pct = parseFloat(pctEl.value)||45;
+  const dia = parseFloat(((toolEl?toolEl.value:'').match(/D(\d+)/)||[])[1])||16;
+  const mm = document.getElementById(type+'-ae-mm');
+  if (mm) mm.textContent = (pct/100*dia).toFixed(1)+' mm';
+};
+
+window.ncwop_updateSteps = function(type) {
+  const prefix = type==='r' ? 'r' : 'f';
+  const depth = parseFloat(document.getElementById(prefix+'-depth')?.value)||5;
+  const ap    = parseFloat(document.getElementById(prefix+'-ap')?.value)||(type==='r'?2:0.5);
+  const el = document.getElementById(prefix+'-steps');
+  if (el) el.textContent = Math.ceil(depth/ap)+' Schr.';
+};

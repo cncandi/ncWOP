@@ -3,138 +3,104 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ncWOP — Online CAM</title>
-  <link rel="stylesheet" href="css/style.css">
+  <title>ncWOP</title>
+  <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
+<div id="app">
 
-<div class="app-shell">
-
-  <!-- ── Header ── -->
-  <header class="app-header">
-    <div class="logo">nc<span>WOP</span></div>
-    <div class="header-divider"></div>
-    <div class="header-title">Neues Projekt</div>
-    <div class="header-actions">
-      <button class="btn btn-secondary btn-sm" id="btn-reset">Zurücksetzen</button>
-      <button class="btn btn-primary btn-sm" id="btn-export" disabled>G-Code exportieren</button>
+  <!-- Header -->
+  <div id="header">
+    <div id="logo">nc<span>WOP</span></div>
+    <div id="project-name">Neues Projekt</div>
+    <div id="header-right">
+      <button class="btn btn-ghost" id="btn-reset">Zurücksetzen</button>
+      <button class="btn btn-primary" id="btn-export" disabled>G-Code exportieren</button>
     </div>
-  </header>
+  </div>
 
-  <!-- ── Sidebar ── -->
-  <aside class="sidebar" id="sidebar">
-    <div class="step-indicator">
-      <div class="step active" id="step-1"><div class="step-num">1</div> Rohling</div>
-      <div class="step-arrow">›</div>
-      <div class="step" id="step-2"><div class="step-num">2</div> Operation</div>
-      <div class="step-arrow">›</div>
-      <div class="step" id="step-3"><div class="step-num">3</div> G-Code</div>
-    </div>
+  <!-- Body -->
+  <div id="body">
 
-    <div class="sidebar-section" id="section-blank">
-      <div class="sidebar-label">Rohling</div>
-      <div class="form-group">
-        <div class="type-toggle" id="blank-type-toggle">
-          <button class="active" data-type="box">Box</button>
-          <button data-type="cylinder">Zylinder</button>
+    <!-- Sidebar -->
+    <div id="sidebar">
+      <div id="tabs">
+        <button class="tab active" data-tab="blank">Rohteil</button>
+        <button class="tab" data-tab="ops">Operationen</button>
+      </div>
+
+      <!-- Rohteil tab -->
+      <div id="tab-blank" class="tab-content">
+        <div class="s-section">
+          <div class="toggle-row">
+            <button class="toggle-btn active" id="tb-box">Box</button>
+            <button class="toggle-btn" id="tb-cyl">Zylinder</button>
+          </div>
+          <div id="blank-box">
+            <div class="field-row"><label>Länge X</label>
+              <div class="input-unit"><input type="number" id="bx" value="100" min="1"><span>mm</span></div>
+            </div>
+            <div class="field-row"><label>Breite Y</label>
+              <div class="input-unit"><input type="number" id="by" value="80" min="1"><span>mm</span></div>
+            </div>
+            <div class="field-row"><label>Höhe Z</label>
+              <div class="input-unit"><input type="number" id="bz" value="30" min="1"><span>mm</span></div>
+            </div>
+          </div>
+          <div id="blank-cyl" style="display:none">
+            <div class="field-row"><label>Durchmesser</label>
+              <div class="input-unit"><input type="number" id="bd" value="80" min="1"><span>mm</span></div>
+            </div>
+            <div class="field-row"><label>Höhe</label>
+              <div class="input-unit"><input type="number" id="bh" value="50" min="1"><span>mm</span></div>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-full" id="btn-blank">Rohteil erstellen</button>
         </div>
       </div>
-      <div id="blank-box-params">
-        <div class="param-grid">
-          <div class="form-group">
-            <label class="form-label">Länge X</label>
-            <div class="form-control-unit"><input type="number" id="blank-x" value="100" min="1"><span class="unit-badge">mm</span></div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Breite Y</label>
-            <div class="form-control-unit"><input type="number" id="blank-y" value="80" min="1"><span class="unit-badge">mm</span></div>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Höhe Z</label>
-          <div class="form-control-unit"><input type="number" id="blank-z" value="30" min="1"><span class="unit-badge">mm</span></div>
+
+      <!-- Operationen tab -->
+      <div id="tab-ops" class="tab-content" style="display:none">
+        <div class="s-section">
+          <div id="op-tree"></div>
+          <button class="btn btn-ghost btn-full" id="btn-add-op">+ Planfräsen hinzufügen</button>
         </div>
       </div>
-      <div id="blank-cylinder-params" style="display:none">
-        <div class="param-grid">
-          <div class="form-group">
-            <label class="form-label">Durchmesser</label>
-            <div class="form-control-unit"><input type="number" id="blank-dia" value="80" min="1"><span class="unit-badge">mm</span></div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Höhe</label>
-            <div class="form-control-unit"><input type="number" id="blank-h" value="50" min="1"><span class="unit-badge">mm</span></div>
-          </div>
+    </div>
+
+    <!-- Viewport -->
+    <div id="viewport">
+      <canvas id="canvas"></canvas>
+      <div id="view-btns">
+        <button class="view-btn" id="v-top">⊤</button>
+        <button class="view-btn" id="v-iso">◈</button>
+        <button class="view-btn" id="v-front">▣</button>
+      </div>
+      <div id="sim-bar" style="display:none">
+        <div id="sim-prog-wrap"><div id="sim-prog"></div></div>
+        <div id="sim-btns">
+          <button class="sim-btn" id="s-start">⏮</button>
+          <button class="sim-btn" id="s-back">⏪</button>
+          <button class="sim-btn sim-primary" id="s-play">▶</button>
+          <button class="sim-btn" id="s-stop">■</button>
+          <button class="sim-btn" id="s-fwd">⏩</button>
+          <button class="sim-btn" id="s-end">⏭</button>
+          <span style="font-size:11px;color:#9398a5;margin-left:4px;">Geschw.</span>
+          <input type="range" id="sim-speed" min="1" max="15" value="3">
         </div>
       </div>
-      <button class="btn btn-primary btn-full" id="btn-create-blank">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:6px"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-        Rohling erstellen
-      </button>
     </div>
 
-    <div class="sidebar-section" id="section-ops" style="display:none">
-      <div class="sidebar-label">Operationen</div>
-      <div id="op-list"></div>
-      <button class="btn btn-secondary btn-full" id="btn-add-op">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:6px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Operation hinzufügen
-      </button>
-    </div>
-  </aside>
-
-  <!-- ── Main 3D Viewport ── -->
-  <main class="main-viewport">
-    <canvas id="three-canvas"></canvas>
-
-    <!-- View buttons -->
-    <div class="viewport-overlay">
-      <button class="viewport-btn" id="btn-view-top" title="Draufsicht">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="1"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
-      </button>
-      <button class="viewport-btn" id="btn-view-iso" title="Isometrisch">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-      </button>
-      <button class="viewport-btn" id="btn-view-front" title="Vorderansicht">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="1"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="12" y1="3" x2="12" y2="21"/></svg>
-      </button>
-    </div>
-
-    <!-- Simulation controls -->
-    <div id="sim-controls" style="display:none; position:absolute; bottom:16px; left:50%; transform:translateX(-50%); background:white; border:1px solid #e2e4e9; border-radius:12px; padding:10px 16px; box-shadow:0 8px 32px rgba(0,0,0,0.10); flex-direction:column; gap:8px; min-width:300px;">
-      <!-- Progress bar -->
-      <div style="height:4px; background:#f0f1f4; border-radius:4px; overflow:hidden;">
-        <div id="sim-progress" style="height:100%; width:0%; background:#0057ff; transition:width 0.05s;"></div>
-      </div>
-      <!-- Controls -->
-      <div style="display:flex; align-items:center; justify-content:center; gap:6px;">
-        <button class="btn btn-secondary btn-sm" id="btn-sim-start" title="Zum Anfang">⏮</button>
-        <button class="btn btn-secondary btn-sm" id="btn-sim-stepback" title="Schritt zurück">⏪</button>
-        <button class="btn btn-primary" id="btn-sim-play" style="width:40px; padding:0;">▶</button>
-        <button class="btn btn-secondary btn-sm" id="btn-sim-stop" title="Stop">■</button>
-        <button class="btn btn-secondary btn-sm" id="btn-sim-stepfwd" title="Schritt vor">⏩</button>
-        <button class="btn btn-secondary btn-sm" id="btn-sim-end" title="Zum Ende">⏭</button>
-      </div>
-      <!-- Speed -->
-      <div style="display:flex; align-items:center; gap:8px;">
-        <span style="font-size:11px; color:#9398a5; white-space:nowrap;">Geschwindigkeit</span>
-        <input type="range" id="sim-speed" min="1" max="15" value="3" style="flex:1; cursor:pointer;">
+    <!-- Right panel -->
+    <div id="panel">
+      <div id="panel-head">Parameter</div>
+      <div id="panel-body">
+        <p class="hint">Rohteil erstellen und Operation wählen.</p>
       </div>
     </div>
 
-    </div>
-  </main>
-
-  <!-- ── Right Panel ── -->
-  <aside class="right-panel" id="right-panel">
-    <div class="panel-header">Parameter</div>
-    <div class="panel-body" id="panel-content" style="padding:0;">
-      <p style="color:var(--text-3); font-size:13px;">Rohling definieren und Operation wählen.</p>
-    </div>
-  </aside>
-
+  </div>
 </div>
-
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script src="js/viewer.js"></script>
@@ -142,6 +108,5 @@
 <script src="js/simulation.js"></script>
 <script src="js/operations.js"></script>
 <script src="js/app.js"></script>
-
 </body>
 </html>
