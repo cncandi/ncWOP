@@ -4,6 +4,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   Viewer.init();
 
+  // Ensure panels visible on load
+  document.querySelector('.app-shell').classList.remove('panel-hidden', 'sidebar-hidden');
+
   let blankType = 'box';
   let blankCreated = false;
 
