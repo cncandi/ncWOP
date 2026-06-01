@@ -25,14 +25,16 @@ const Operations = (() => {
   function generateFaceMilling(op, blankData, opIndex, existingStateIndex) {
     const { tool, params } = op;
     const blank = blankData.params;
-    const ae = params.ae;
-    const ap = params.ap;
-    const toolR = tool.diameter / 2;
+    const toolDia = tool.diameter;
+    const ae = ((params.aePct || 45) / 100) * toolDia;
+    const ap = params.ap || 2;
+    const depth = params.depth || 5;
+    const toolR = toolDia / 2;
 
     let x = blank.x || blank.dia;
     let y = blank.y || blank.dia;
     const z = blank.z || blank.h;
-    const startZ = z - ap;
+    const startZ = z - Math.min(ap, depth); // first pass
     const startX = -(x / 2) - toolR;
     const endX   = (x / 2) + toolR;
 
@@ -186,22 +188,38 @@ const Operations = (() => {
           </div>
           <div class="param-row">
             <span class="param-row-label">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" style="margin-right:4px;vertical-align:middle"><path d="M2 12h20M18 8l4 4-4 4"/></svg>
+              Seitl. Zust. ae
+            </span>
+            <div style="display:flex; gap:4px; align-items:center;">
+              <div class="form-control-unit" style="width:68px;">
+                <input type="number" id="op-ae-pct" value="${p.aePct ?? 45}" min="1" max="100" step="1" oninput="updateAeMm('r')">
+                <span class="unit-badge">%</span>
+              </div>
+              <span id="op-ae-mm-r" style="font-size:11px; color:var(--text-3); white-space:nowrap;">${((p.aePct??45)/100*16).toFixed(1)} mm</span>
+            </div>
+          </div>
+          <div class="param-row">
+            <span class="param-row-label">
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" style="margin-right:4px;vertical-align:middle"><path d="M12 2v20M8 18l4 4 4-4"/></svg>
-              Tiefenzust. ap
+              Gesamttiefe
             </span>
             <div class="form-control-unit param-row-input">
-              <input type="number" id="op-ap" value="${rAp}" min="0.1" step="0.1">
+              <input type="number" id="op-depth" value="${p.depth ?? 5}" min="0.1" step="0.1" oninput="updateSteps('r')">
               <span class="unit-badge">mm</span>
             </div>
           </div>
           <div class="param-row">
             <span class="param-row-label">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" style="margin-right:4px;vertical-align:middle"><path d="M2 12h20M18 8l4 4-4 4"/></svg>
-              Seitl. Zust. ae
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" style="margin-right:4px;vertical-align:middle"><path d="M12 2v20M8 18l4 4 4-4"/></svg>
+              Tiefenzust. ap
             </span>
-            <div class="form-control-unit param-row-input">
-              <input type="number" id="op-ae" value="${rAe}" min="0.1" step="0.1">
-              <span class="unit-badge">mm</span>
+            <div style="display:flex; gap:4px; align-items:center;">
+              <div class="form-control-unit" style="width:68px;">
+                <input type="number" id="op-ap" value="${rAp}" min="0.1" step="0.1" oninput="updateSteps('r')">
+                <span class="unit-badge">mm</span>
+              </div>
+              <span id="op-steps-r" style="font-size:11px; color:var(--text-3); white-space:nowrap;">${Math.ceil((p.depth??5)/rAp)} Schr.</span>
             </div>
           </div>
         </div>

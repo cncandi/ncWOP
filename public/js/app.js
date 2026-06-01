@@ -102,12 +102,16 @@ document.addEventListener('DOMContentLoaded', () => {
         rEnabled: document.getElementById('chk-roughing')?.checked ?? true,
         rTool: document.getElementById('op-r-tool')?.value || '',
         rMode: document.getElementById('op-r-mode')?.value || 'parallel',
-        ap:    parseFloat(document.getElementById('op-ap')?.value)    || 2,
+        aePct: parseFloat(document.getElementById('op-ae-pct')?.value)  || 45,
+        depth: parseFloat(document.getElementById('op-depth')?.value)    || 5,
+        ap:    parseFloat(document.getElementById('op-ap')?.value)        || 2,
         ae:    parseFloat(document.getElementById('op-ae')?.value)    || 12,
         fEnabled: document.getElementById('chk-finishing')?.checked ?? true,
         fTool: document.getElementById('op-f-tool')?.value || '',
         fMode: document.getElementById('op-f-mode')?.value || 'traditional',
-        fAp: parseFloat(document.getElementById('op-f-ap')?.value) || 0.5,
+        fAePct: parseFloat(document.getElementById('op-f-ae-pct')?.value) || 45,
+        fDepth: parseFloat(document.getElementById('op-f-depth')?.value)  || 5,
+        fAp:    parseFloat(document.getElementById('op-f-ap')?.value)     || 0.5,
         fAe: parseFloat(document.getElementById('op-f-ae')?.value) || 12,
         fAllowance: parseFloat(document.getElementById('op-f-allowance')?.value) || 0,
         cEnabled: document.getElementById('chk-chamfer')?.checked ?? false,
@@ -262,5 +266,37 @@ document.addEventListener('DOMContentLoaded', () => {
       document.body.style.userSelect = '';
     });
   })();
+
+  // ── ae % → mm live update ──
+  window.updateAeMm = function(type) {
+    if (type === 'r') {
+      const pct = parseFloat(document.getElementById('op-ae-pct')?.value) || 45;
+      const dia = parseFloat(document.getElementById('op-r-tool')?.value.match(/D(\d+)/)?.[1]) || 16;
+      const mm = (pct / 100 * dia).toFixed(1);
+      const el = document.getElementById('op-ae-mm-r');
+      if (el) el.textContent = mm + ' mm';
+    } else {
+      const pct = parseFloat(document.getElementById('op-f-ae-pct')?.value) || 45;
+      const dia = parseFloat(document.getElementById('op-f-tool')?.value.match(/D(\d+)/)?.[1]) || 16;
+      const mm = (pct / 100 * dia).toFixed(1);
+      const el = document.getElementById('op-ae-mm-f');
+      if (el) el.textContent = mm + ' mm';
+    }
+  };
+
+  // ── depth / ap → steps live update ──
+  window.updateSteps = function(type) {
+    if (type === 'r') {
+      const depth = parseFloat(document.getElementById('op-depth')?.value) || 5;
+      const ap    = parseFloat(document.getElementById('op-ap')?.value)    || 2;
+      const el = document.getElementById('op-steps-r');
+      if (el) el.textContent = Math.ceil(depth / ap) + ' Schr.';
+    } else {
+      const depth = parseFloat(document.getElementById('op-f-depth')?.value) || 5;
+      const ap    = parseFloat(document.getElementById('op-f-ap')?.value)    || 0.5;
+      const el = document.getElementById('op-steps-f');
+      if (el) el.textContent = Math.ceil(depth / ap) + ' Schr.';
+    }
+  };
 
 });
