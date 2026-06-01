@@ -58,13 +58,13 @@ const Operations = (() => {
     lastPoints = points;
     lastTool = tool;
 
-    // Apply to blank for before/after
-    Blank.applyOperation(ap);
+    // Store op state in blank
+    const opStateIndex = Blank.addOpState(ap);
 
     // Init simulation
     Simulation.init(points, tool.diameter, tool.length);
 
-    return points;
+    return { points, opStateIndex };
   }
 
   function getLastPoints() { return lastPoints; }

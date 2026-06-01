@@ -52,13 +52,23 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-add-op').addEventListener('click', () => {
     if (!blankCreated) return;
     const opIndex = Operations.getAll().length;
-    Operations.addOperation({ type: 'face-milling', tool: {}, params: {} });
+    Operations.addOperation({ type: 'face-milling', tool: {}, params: {}, opStateIndex: -1 });
     const opList = document.getElementById('op-list');
     const card = document.createElement('div');
     card.className = 'op-card active';
     card.dataset.index = opIndex;
     card.innerHTML = `<div class="op-card-title">Planfräsen</div><div class="op-card-sub">Parameter eingeben →</div>`;
-    card.addEventListener('click', () => showOpPanel(opIndex));
+    card.addEventListener('click', () => {
+      showOpPanel(opIndex);
+      const ops = Operations.getAll();
+      if (ops[opIndex] && ops[opIndex].opStateIndex >= 0) {
+        Blank.showOpState(ops[opIndex].opStateIndex);
+        document.getElementById('btn-show-after').style.background = '#0057ff';
+        document.getElementById('btn-show-after').style.color = '#fff';
+        document.getElementById('btn-show-before').style.background = '';
+        document.getElementById('btn-show-before').style.color = '';
+      }
+    });
     opList.appendChild(card);
     showOpPanel(opIndex);
   });
@@ -81,16 +91,18 @@ document.addEventListener('DOMContentLoaded', () => {
         ae: parseFloat(document.getElementById('op-ae').value),
         ap: parseFloat(document.getElementById('op-ap').value),
       };
-      Operations.generateFaceMilling({ tool, params }, Blank.getData());
+      const result = Operations.generateFaceMilling({ tool, params }, Blank.getData());
+      const ops = Operations.getAll();
+      ops[index].opStateIndex = result.opStateIndex;
       setStep(3);
       document.getElementById('btn-export').disabled = false;
 
       // Show simulation controls
       document.getElementById('sim-controls').style.display = 'flex';
 
-      // Show before/after toggle and switch to "Nachher" immediately
+      // Show before/after toggle and switch to "Nachher" for this op
       document.getElementById('before-after-ctrl').style.display = 'block';
-      Blank.showAfter();
+      Blank.showOpState(result.opStateIndex);
       document.getElementById('btn-show-after').style.background = '#0057ff';
       document.getElementById('btn-show-after').style.color = '#fff';
       document.getElementById('btn-show-before').style.background = '';
