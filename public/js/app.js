@@ -210,17 +210,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── Panel resize & collapse ──
 
-  // Sidebar toggle
-  document.getElementById('sidebar-toggle').addEventListener('click', () => {
-    const hidden = shell.classList.toggle('sidebar-hidden');
-    document.getElementById('sidebar-toggle').textContent = hidden ? '›' : '‹';
-  });
-
-  // Right panel toggle
-  document.getElementById('panel-toggle').addEventListener('click', () => {
-    const hidden = shell.classList.toggle('panel-hidden');
-    document.getElementById('panel-toggle').textContent = hidden ? '‹' : '›';
-  });
 
 
 
