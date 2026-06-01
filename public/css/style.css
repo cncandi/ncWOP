@@ -35,8 +35,7 @@ body {
 .app-shell {
   display: grid;
   grid-template-rows: 52px 1fr;
-  grid-template-columns: var(--sidebar-w, 300px) 1fr var(--panel-w, 320px);
-  min-height: 0;
+  grid-template-columns: 300px 1fr 320px;
   grid-template-areas:
     "header header header"
     "sidebar main panel";
@@ -46,12 +45,11 @@ body {
 }
 
 .app-shell.sidebar-hidden {
-  grid-template-columns: 0px 1fr var(--panel-w, 320px);
+  grid-template-columns: 0px 1fr 320px;
 }
 
-
 .app-shell.panel-hidden {
-  grid-template-columns: var(--sidebar-w, 300px) 1fr 0px;
+  grid-template-columns: 300px 1fr 0px;
 }
 
 .app-shell.sidebar-hidden.panel-hidden {

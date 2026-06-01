@@ -7,8 +7,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Ensure panels visible on load with correct widths
   const shell = document.querySelector('.app-shell');
   shell.classList.remove('panel-hidden', 'sidebar-hidden');
-  shell.style.setProperty('--sidebar-w', '300px');
-  shell.style.setProperty('--panel-w', '320px');
 
   let blankType = 'box';
   let blankCreated = false;
@@ -224,53 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('panel-toggle').textContent = hidden ? '‹' : '›';
   });
 
-  // Sidebar resize drag
-  (function() {
-    const handle = document.getElementById('sidebar-resize');
-    let dragging = false, startX, startW;
-    handle.addEventListener('mousedown', e => {
-      dragging = true; startX = e.clientX;
-      startW = parseInt(getComputedStyle(document.getElementById('sidebar')).width);
-      handle.classList.add('dragging');
-      document.body.style.cursor = 'col-resize';
-      document.body.style.userSelect = 'none';
-    });
-    document.addEventListener('mousemove', e => {
-      if (!dragging) return;
-      const w = Math.max(180, Math.min(500, startW + e.clientX - startX));
-      shell.style.setProperty('--sidebar-w', w + 'px');
-    });
-    document.addEventListener('mouseup', () => {
-      dragging = false;
-      handle.classList.remove('dragging');
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-    });
-  })();
 
-  // Right panel resize drag
-  (function() {
-    const handle = document.getElementById('panel-resize');
-    let dragging = false, startX, startW;
-    handle.addEventListener('mousedown', e => {
-      dragging = true; startX = e.clientX;
-      startW = parseInt(getComputedStyle(document.getElementById('right-panel')).width);
-      handle.classList.add('dragging');
-      document.body.style.cursor = 'col-resize';
-      document.body.style.userSelect = 'none';
-    });
-    document.addEventListener('mousemove', e => {
-      if (!dragging) return;
-      const w = Math.max(200, Math.min(600, startW - (e.clientX - startX)));
-      shell.style.setProperty('--panel-w', w + 'px');
-    });
-    document.addEventListener('mouseup', () => {
-      dragging = false;
-      handle.classList.remove('dragging');
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-    });
-  })();
 
   // ── ae % → mm live update ──
   window.updateAeMm = function(type) {
