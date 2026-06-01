@@ -14,14 +14,19 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Deploy via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
+          server: ftp.fastmill.biz
+          username: robsimul@cnc-technik.de
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./public/
           server-dir: /ncwop/
+          protocol: ftp
+          port: 21
+          timeout: 60000
+          log-level: standard
           exclude: |
             **/.git*
             **/.git*/**
-            **/node_modules/**
+            **/.github/**
+            README.md
