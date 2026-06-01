@@ -35,12 +35,25 @@ body {
 .app-shell {
   display: grid;
   grid-template-rows: 52px 1fr;
-  grid-template-columns: 300px 1fr 320px;
+  grid-template-columns: var(--sidebar-w, 300px) 1fr var(--panel-w, 320px);
   grid-template-areas:
     "header header header"
     "sidebar main panel";
   height: 100vh;
   overflow: hidden;
+  transition: grid-template-columns 0.2s;
+}
+
+.app-shell.sidebar-hidden {
+  grid-template-columns: 0px 1fr var(--panel-w, 320px);
+}
+
+.app-shell.panel-hidden {
+  grid-template-columns: var(--sidebar-w, 300px) 1fr 0px;
+}
+
+.app-shell.sidebar-hidden.panel-hidden {
+  grid-template-columns: 0px 1fr 0px;
 }
 
 /* ── Header ── */
@@ -421,4 +434,67 @@ select.form-control {
   font-size: 11px;
   color: var(--text-3);
   margin-top: 3px;
+}
+
+/* ── Panel collapse/resize ── */
+.sidebar, .right-panel {
+  overflow: hidden;
+  transition: min-width 0.2s;
+  position: relative;
+}
+
+.app-shell.sidebar-hidden .sidebar {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.app-shell.panel-hidden .right-panel {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.resize-handle {
+  width: 5px;
+  cursor: col-resize;
+  background: transparent;
+  position: absolute;
+  top: 0; right: 0;
+  height: 100%;
+  z-index: 20;
+  transition: background 0.15s;
+}
+.resize-handle:hover, .resize-handle.dragging {
+  background: var(--accent);
+}
+
+.resize-handle-left {
+  left: 0; right: auto;
+}
+
+.panel-toggle {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 40px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0 6px 6px 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: var(--text-3);
+  z-index: 30;
+  right: -18px;
+  box-shadow: 2px 0 6px rgba(0,0,0,0.06);
+  transition: background 0.15s;
+}
+.panel-toggle:hover { background: var(--surface2); color: var(--text); }
+
+.panel-toggle-right {
+  left: -18px; right: auto;
+  border-radius: 6px 0 0 6px;
+  box-shadow: -2px 0 6px rgba(0,0,0,0.06);
 }

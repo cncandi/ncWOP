@@ -22,7 +22,9 @@
   </header>
 
   <!-- ── Sidebar ── -->
-  <aside class="sidebar">
+  <aside class="sidebar" id="sidebar">
+    <div class="resize-handle" id="sidebar-resize"></div>
+    <button class="panel-toggle" id="sidebar-toggle" title="Panel ein-/ausblenden">‹</button>
     <div class="step-indicator">
       <div class="step active" id="step-1"><div class="step-num">1</div> Rohling</div>
       <div class="step-arrow">›</div>
@@ -121,6 +123,8 @@
 
   <!-- ── Right Panel ── -->
   <aside class="right-panel" id="right-panel">
+    <div class="resize-handle resize-handle-left" id="panel-resize"></div>
+    <button class="panel-toggle panel-toggle-right" id="panel-toggle" title="Panel ein-/ausblenden">›</button>
     <div class="panel-header">Parameter</div>
     <div class="panel-body" id="panel-content">
       <p style="color:var(--text-3); font-size:13px;">Rohling definieren und Operation wählen.</p>

@@ -86,11 +86,15 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('btn-export').disabled = false;
 
       // Show simulation controls
-      const simCtrl = document.getElementById('sim-controls');
-      simCtrl.style.display = 'flex';
+      document.getElementById('sim-controls').style.display = 'flex';
 
-      // Show before/after toggle
+      // Show before/after toggle and switch to "Nachher" immediately
       document.getElementById('before-after-ctrl').style.display = 'block';
+      Blank.showAfter();
+      document.getElementById('btn-show-after').style.background = '#0057ff';
+      document.getElementById('btn-show-after').style.color = '#fff';
+      document.getElementById('btn-show-before').style.background = '';
+      document.getElementById('btn-show-before').style.color = '';
     });
   }
 
@@ -161,5 +165,68 @@ document.addEventListener('DOMContentLoaded', () => {
       else if (i === active) el.classList.add('active');
     }
   }
+
+  // ── Panel resize & collapse ──
+  const shell = document.querySelector('.app-shell');
+
+  // Sidebar toggle
+  document.getElementById('sidebar-toggle').addEventListener('click', () => {
+    const hidden = shell.classList.toggle('sidebar-hidden');
+    document.getElementById('sidebar-toggle').textContent = hidden ? '›' : '‹';
+  });
+
+  // Right panel toggle
+  document.getElementById('panel-toggle').addEventListener('click', () => {
+    const hidden = shell.classList.toggle('panel-hidden');
+    document.getElementById('panel-toggle').textContent = hidden ? '‹' : '›';
+  });
+
+  // Sidebar resize drag
+  (function() {
+    const handle = document.getElementById('sidebar-resize');
+    let dragging = false, startX, startW;
+    handle.addEventListener('mousedown', e => {
+      dragging = true; startX = e.clientX;
+      startW = parseInt(getComputedStyle(document.getElementById('sidebar')).width);
+      handle.classList.add('dragging');
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    });
+    document.addEventListener('mousemove', e => {
+      if (!dragging) return;
+      const w = Math.max(180, Math.min(500, startW + e.clientX - startX));
+      shell.style.setProperty('--sidebar-w', w + 'px');
+    });
+    document.addEventListener('mouseup', () => {
+      dragging = false;
+      handle.classList.remove('dragging');
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    });
+  })();
+
+  // Right panel resize drag
+  (function() {
+    const handle = document.getElementById('panel-resize');
+    let dragging = false, startX, startW;
+    handle.addEventListener('mousedown', e => {
+      dragging = true; startX = e.clientX;
+      startW = parseInt(getComputedStyle(document.getElementById('right-panel')).width);
+      handle.classList.add('dragging');
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    });
+    document.addEventListener('mousemove', e => {
+      if (!dragging) return;
+      const w = Math.max(200, Math.min(600, startW - (e.clientX - startX)));
+      shell.style.setProperty('--panel-w', w + 'px');
+    });
+    document.addEventListener('mouseup', () => {
+      dragging = false;
+      handle.classList.remove('dragging');
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    });
+  })();
 
 });
