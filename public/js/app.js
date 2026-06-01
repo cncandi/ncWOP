@@ -4,8 +4,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   Viewer.init();
 
-  // Ensure panels visible on load
-  document.querySelector('.app-shell').classList.remove('panel-hidden', 'sidebar-hidden');
+  // Ensure panels visible on load with correct widths
+  const shell = document.querySelector('.app-shell');
+  shell.classList.remove('panel-hidden', 'sidebar-hidden');
+  shell.style.setProperty('--sidebar-w', '300px');
+  shell.style.setProperty('--panel-w', '320px');
 
   let blankType = 'box';
   let blankCreated = false;
@@ -208,7 +211,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ── Panel resize & collapse ──
-  const shell = document.querySelector('.app-shell');
 
   // Sidebar toggle
   document.getElementById('sidebar-toggle').addEventListener('click', () => {
