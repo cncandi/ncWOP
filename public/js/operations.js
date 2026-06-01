@@ -96,21 +96,31 @@ const Operations = (() => {
 
     return `
       <div class="param-section-title">
-        <span class="param-section-icon">◧</span> Planfräsen
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        Planfräsen
       </div>
 
       <!-- Misc -->
       <div class="param-group">
-        <div class="param-group-header">Allgemein</div>
+        <div class="param-group-header">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>
+          &nbsp;Allgemein
+        </div>
         <div class="param-row">
-          <span class="param-row-label">Safe Z</span>
+          <span class="param-row-label">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" style="margin-right:5px;vertical-align:middle"><path d="M12 2v20M2 12h20"/></svg>
+            Safe Z
+          </span>
           <div class="form-control-unit param-row-input">
             <input type="number" id="op-safeZ" value="${safeZ}" min="0">
             <span class="unit-badge">mm</span>
           </div>
         </div>
         <div class="param-row">
-          <span class="param-row-label">Referenz Z</span>
+          <span class="param-row-label">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="2.5" style="margin-right:5px;vertical-align:middle"><path d="M5 12h14"/></svg>
+            Referenz Z
+          </span>
           <div class="form-control-unit param-row-input">
             <input type="number" id="op-refZ" value="${refZ}">
             <span class="unit-badge">mm</span>
@@ -122,17 +132,18 @@ const Operations = (() => {
       <div class="param-group">
         <div class="param-group-header">
           <input type="checkbox" checked style="margin-right:6px; accent-color:var(--accent);">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:4px"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
           Werkzeug
         </div>
         <div class="param-row">
-          <span class="param-row-label">Durchmesser</span>
+          <span class="param-row-label">⌀ Durchmesser</span>
           <div class="form-control-unit param-row-input">
             <input type="number" id="op-tool-dia" value="${dia}" min="1">
             <span class="unit-badge">mm</span>
           </div>
         </div>
         <div class="param-row">
-          <span class="param-row-label">Länge</span>
+          <span class="param-row-label">↕ Länge</span>
           <div class="form-control-unit param-row-input">
             <input type="number" id="op-tool-len" value="${len}" min="1">
             <span class="unit-badge">mm</span>
@@ -144,31 +155,44 @@ const Operations = (() => {
       <div class="param-group">
         <div class="param-group-header">
           <input type="checkbox" id="chk-roughing" checked style="margin-right:6px; accent-color:var(--accent);">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:4px"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
           Schruppen
         </div>
         <div class="param-row">
-          <span class="param-row-label">Tiefenzust. ap</span>
+          <span class="param-row-label">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" style="margin-right:4px;vertical-align:middle"><path d="M12 2v20M8 18l4 4 4-4"/></svg>
+            Tiefenzust. ap
+          </span>
           <div class="form-control-unit param-row-input">
             <input type="number" id="op-ap" value="${ap}" min="0.1" step="0.1">
             <span class="unit-badge">mm</span>
           </div>
         </div>
         <div class="param-row">
-          <span class="param-row-label">Seitl. Zust. ae</span>
+          <span class="param-row-label">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" style="margin-right:4px;vertical-align:middle"><path d="M2 12h20M18 8l4 4-4 4"/></svg>
+            Seitl. Zust. ae
+          </span>
           <div class="form-control-unit param-row-input">
             <input type="number" id="op-ae" value="${ae}" min="0.1" step="0.1">
             <span class="unit-badge">mm</span>
           </div>
         </div>
         <div class="param-row">
-          <span class="param-row-label">Vorschub</span>
+          <span class="param-row-label">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="2.5" style="margin-right:4px;vertical-align:middle"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            Vorschub
+          </span>
           <div class="form-control-unit param-row-input">
             <input type="number" id="op-feed" value="${feed}" min="1">
             <span class="unit-badge">mm/m</span>
           </div>
         </div>
         <div class="param-row">
-          <span class="param-row-label">Drehzahl</span>
+          <span class="param-row-label">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="2.5" style="margin-right:4px;vertical-align:middle"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12"/></svg>
+            Drehzahl
+          </span>
           <div class="form-control-unit param-row-input">
             <input type="number" id="op-speed" value="${spd}" min="1">
             <span class="unit-badge">RPM</span>
@@ -176,9 +200,12 @@ const Operations = (() => {
         </div>
       </div>
 
-      <button class="btn btn-primary btn-full" id="btn-calc-toolpath" style="margin-top:4px;">
-        Werkzeugweg berechnen
-      </button>
+      <div style="padding:12px 16px;">
+        <button class="btn btn-primary btn-full" id="btn-calc-toolpath">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:6px"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Werkzeugweg berechnen
+        </button>
+      </div>
     `;
   }
 
