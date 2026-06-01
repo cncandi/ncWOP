@@ -92,9 +92,7 @@ const Blank = (() => {
     }
   }
 
-  function showBefore() {
-    setMesh(buildMesh(blankType, originalParams, 0xc8d8e8, 0.85));
-  }
+  function showBefore() { /* disabled */ }
 
   function showAfter() {
     if (opStates.length === 0) return;

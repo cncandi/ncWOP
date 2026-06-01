@@ -64,10 +64,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (ops[opIndex] && ops[opIndex].opStateIndex >= 0) {
         Blank.showOpState(ops[opIndex].opStateIndex);
         Operations.showToolpath(opIndex);
-        document.getElementById('btn-show-after').style.background = '#0057ff';
-        document.getElementById('btn-show-after').style.color = '#fff';
-        document.getElementById('btn-show-before').style.background = '';
-        document.getElementById('btn-show-before').style.color = '';
         // Show sim controls if toolpath exists
         document.getElementById('sim-controls').style.display = 'flex';
         document.getElementById('sim-progress').style.width = '0%';
@@ -131,14 +127,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Show simulation controls
       document.getElementById('sim-controls').style.display = 'flex';
-
-      // Show before/after toggle and switch to "Nachher" for this op
-      document.getElementById('before-after-ctrl').style.display = 'block';
-      Blank.showOpState(result.opStateIndex);
-      document.getElementById('btn-show-after').style.background = '#0057ff';
-      document.getElementById('btn-show-after').style.color = '#fff';
-      document.getElementById('btn-show-before').style.background = '';
-      document.getElementById('btn-show-before').style.color = '';
     });
   }
 
