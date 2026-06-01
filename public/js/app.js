@@ -45,9 +45,9 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-add-op').addEventListener('click', () => {
     if (!blankCreated) { alert('Bitte zuerst Rohteil erstellen.'); return; }
     const oi = Operations.addOp();
+    Operations.generateFaceMilling(oi);
     rebuildTree();
-    // Auto-select general of new op
-    selectNode(oi, 'general');
+    selectNode(oi, 'roughing');
     // Switch to ops tab
     document.querySelector('.tab[data-tab="ops"]').click();
   });
@@ -58,12 +58,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function selectNode(oi, sub) {
     Operations.setSelected(oi, sub);
-    Operations.renderPanel(oi, sub, (calcOi) => {
-      Operations.generateFaceMilling(calcOi);
-      rebuildTree();
-    });
-    // Show toolpath if exists
-    if (sub === 'roughing') Operations.showToolpath(oi);
+    Operations.renderPanel(oi, sub, () => {});
+
+    // Always show toolpath + result immediately
+    Operations.showToolpath(oi);
+
+    // Auto-recalc on any input change in panel
+    setTimeout(() => {
+      document.querySelectorAll('#panel-body input, #panel-body select').forEach(el => {
+        el.addEventListener('input', () => {
+          Operations.saveParams(oi, sub);
+          Operations.generateFaceMilling(oi);
+          rebuildTree();
+          Operations.setSelected(oi, sub);
+        });
+        el.addEventListener('change', () => {
+          Operations.saveParams(oi, sub);
+          Operations.generateFaceMilling(oi);
+          rebuildTree();
+          Operations.setSelected(oi, sub);
+        });
+      });
+    }, 0);
   }
 
   // ── Viewport buttons ──

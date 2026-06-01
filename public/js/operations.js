@@ -70,19 +70,8 @@ const Operations = (() => {
   }
 
   function showToolpath(opIdx) {
-    Object.values(toolpathLines).forEach(l => { if(l) l.visible=false; });
-    if (toolpathLines[opIdx]) {
-      toolpathLines[opIdx].visible = true;
-      const op = ops[opIdx];
-      const r = op.params.roughing;
-      const toolDia = parseFloat((r.tool.match(/D(\d+)/)||[])[1]) || 16;
-      const pts = toolpathLines[opIdx].geometry.attributes.position;
-      const arr = [];
-      for(let i=0;i<pts.count;i++) arr.push(new THREE.Vector3(pts.getX(i),pts.getY(i),pts.getZ(i)));
-      Simulation.init(arr, toolDia, 60);
-      document.getElementById('sim-bar').style.display = 'flex';
-    }
-    if (op && op.stateIdx >= 0) Blank.showOp(opIdx);
+    // Always recalculate to show current state
+    generateFaceMilling(opIdx);
   }
 
   /* ── tree rendering ── */
@@ -164,7 +153,6 @@ const Operations = (() => {
 
     let html = `<div class="p-op-title">
       <span class="p-op-title-text">Planfräsen ${oi+1} — ${subLabel(sub)}</span>
-      ${sub==='roughing'||sub==='finishing' ? `<button class="btn btn-primary btn-sm" id="btn-calc">▶ Berechnen</button>` : ''}
     </div>`;
 
     if (sub === 'general') {
@@ -217,10 +205,6 @@ const Operations = (() => {
     }
 
     panel.innerHTML = html;
-
-    // Berechnen button
-    const calcBtn = document.getElementById('btn-calc');
-    if (calcBtn) calcBtn.addEventListener('click', () => { saveParams(oi, sub); onCalc(oi); });
 
     // Collapsible groups
     panel.querySelectorAll('.p-group-hd').forEach(hd => {
