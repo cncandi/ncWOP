@@ -85,30 +85,47 @@ const Operations = (() => {
 
   function renderPanel(opIndex) {
     const op = ops[opIndex];
-    const dia  = op && op.tool && op.tool.diameter ? op.tool.diameter : 16;
-    const len  = op && op.tool && op.tool.length   ? op.tool.length   : 60;
-    const feed = op && op.params && op.params.feed ? op.params.feed   : 800;
-    const spd  = op && op.params && op.params.speed? op.params.speed  : 3000;
-    const ae   = op && op.params && op.params.ae   ? op.params.ae     : 12;
-    const ap   = op && op.params && op.params.ap   ? op.params.ap     : 2;
-    const safeZ= op && op.params && op.params.safeZ? op.params.safeZ  : 50;
-    const refZ = op && op.params && op.params.refZ ? op.params.refZ   : 0;
+    const p = op && op.params ? op.params : {};
+
+    // Defaults
+    const safeZ    = p.safeZ    ?? 50;
+    const refZ     = p.refZ     ?? 0;
+    const dir      = p.dir      ?? 'climb';
+
+    // Schruppen
+    const rEnabled = p.rEnabled ?? true;
+    const rTool    = p.rTool    ?? 'T1 D16mm';
+    const rMode    = p.rMode    ?? 'parallel';
+    const rAp      = p.rAp     ?? 2;
+    const rAe      = p.rAe     ?? 12;
+
+    // Schlichten
+    const fEnabled = p.fEnabled ?? true;
+    const fTool    = p.fTool    ?? 'T1 D16mm';
+    const fMode    = p.fMode    ?? 'traditional';
+    const fAllowance = p.fAllowance ?? 0;
+
+    // Kanten brechen
+    const cEnabled = p.cEnabled ?? false;
+    const cTool    = p.cTool    ?? 'T2 D16mm 45°';
+    const cDepth   = p.cDepth   ?? 0.5;
+    const cSteps   = p.cSteps   ?? 1;
 
     return `
       <div class="param-section-title">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="8" y1="21" x2="16" y2="21"/></svg>
         Planfräsen
       </div>
 
-      <!-- Misc -->
+      <!-- Allgemein -->
       <div class="param-group">
         <div class="param-group-header">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3"/></svg>
           &nbsp;Allgemein
         </div>
         <div class="param-row">
           <span class="param-row-label">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" style="margin-right:5px;vertical-align:middle"><path d="M12 2v20M2 12h20"/></svg>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" style="margin-right:4px;vertical-align:middle"><path d="M12 2v20M8 18l4 4 4-4"/></svg>
             Safe Z
           </span>
           <div class="form-control-unit param-row-input">
@@ -118,7 +135,7 @@ const Operations = (() => {
         </div>
         <div class="param-row">
           <span class="param-row-label">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="2.5" style="margin-right:5px;vertical-align:middle"><path d="M5 12h14"/></svg>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="2.5" style="margin-right:4px;vertical-align:middle"><path d="M5 12h14"/></svg>
             Referenz Z
           </span>
           <div class="form-control-unit param-row-input">
@@ -126,88 +143,139 @@ const Operations = (() => {
             <span class="unit-badge">mm</span>
           </div>
         </div>
-      </div>
-
-      <!-- Tool -->
-      <div class="param-group">
-        <div class="param-group-header">
-          <input type="checkbox" checked style="margin-right:6px; accent-color:var(--accent);">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:4px"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-          Werkzeug
-        </div>
         <div class="param-row">
-          <span class="param-row-label">⌀ Durchmesser</span>
-          <div class="form-control-unit param-row-input">
-            <input type="number" id="op-tool-dia" value="${dia}" min="1">
-            <span class="unit-badge">mm</span>
-          </div>
-        </div>
-        <div class="param-row">
-          <span class="param-row-label">↕ Länge</span>
-          <div class="form-control-unit param-row-input">
-            <input type="number" id="op-tool-len" value="${len}" min="1">
-            <span class="unit-badge">mm</span>
-          </div>
+          <span class="param-row-label">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="2.5" style="margin-right:4px;vertical-align:middle"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            Fräsrichtung
+          </span>
+          <select id="op-dir" class="form-control" style="height:28px; font-size:12px; width:110px;">
+            <option value="climb" ${dir==='climb'?'selected':''}>Gleichlauf</option>
+            <option value="conventional" ${dir==='conventional'?'selected':''}>Gegenlauf</option>
+            <option value="auto" ${dir==='auto'?'selected':''}>Auto</option>
+          </select>
         </div>
       </div>
 
-      <!-- Roughing -->
+      <!-- Schruppen -->
       <div class="param-group">
-        <div class="param-group-header">
-          <input type="checkbox" id="chk-roughing" checked style="margin-right:6px; accent-color:var(--accent);">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:4px"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+        <div class="param-group-header param-group-header--collapsible" data-target="grp-roughing">
+          <input type="checkbox" id="chk-roughing" ${rEnabled?'checked':''} style="margin-right:6px; accent-color:var(--accent);" onclick="event.stopPropagation()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:5px"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
           Schruppen
+          <span class="grp-chevron" style="margin-left:auto;">▾</span>
         </div>
-        <div class="param-row">
-          <span class="param-row-label">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" style="margin-right:4px;vertical-align:middle"><path d="M12 2v20M8 18l4 4 4-4"/></svg>
-            Tiefenzust. ap
-          </span>
-          <div class="form-control-unit param-row-input">
-            <input type="number" id="op-ap" value="${ap}" min="0.1" step="0.1">
-            <span class="unit-badge">mm</span>
+        <div id="grp-roughing">
+          <div class="param-row">
+            <span class="param-row-label">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" style="margin-right:4px;vertical-align:middle"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+              Werkzeug
+            </span>
+            <input type="text" id="op-r-tool" value="${rTool}" class="form-control" style="width:110px; height:28px; font-size:12px;">
+          </div>
+          <div class="param-row">
+            <span class="param-row-label">Modus</span>
+            <select id="op-r-mode" class="form-control" style="height:28px; font-size:12px; width:110px;">
+              <option value="parallel" ${rMode==='parallel'?'selected':''}>Parallel</option>
+              <option value="contour" ${rMode==='contour'?'selected':''}>Konturparallel</option>
+              <option value="spiral" ${rMode==='spiral'?'selected':''}>Spiralförmig</option>
+            </select>
+          </div>
+          <div class="param-row">
+            <span class="param-row-label">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" style="margin-right:4px;vertical-align:middle"><path d="M12 2v20M8 18l4 4 4-4"/></svg>
+              Tiefenzust. ap
+            </span>
+            <div class="form-control-unit param-row-input">
+              <input type="number" id="op-ap" value="${rAp}" min="0.1" step="0.1">
+              <span class="unit-badge">mm</span>
+            </div>
+          </div>
+          <div class="param-row">
+            <span class="param-row-label">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" style="margin-right:4px;vertical-align:middle"><path d="M2 12h20M18 8l4 4-4 4"/></svg>
+              Seitl. Zust. ae
+            </span>
+            <div class="form-control-unit param-row-input">
+              <input type="number" id="op-ae" value="${rAe}" min="0.1" step="0.1">
+              <span class="unit-badge">mm</span>
+            </div>
           </div>
         </div>
-        <div class="param-row">
-          <span class="param-row-label">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" style="margin-right:4px;vertical-align:middle"><path d="M2 12h20M18 8l4 4-4 4"/></svg>
-            Seitl. Zust. ae
-          </span>
-          <div class="form-control-unit param-row-input">
-            <input type="number" id="op-ae" value="${ae}" min="0.1" step="0.1">
-            <span class="unit-badge">mm</span>
+      </div>
+
+      <!-- Schlichten -->
+      <div class="param-group">
+        <div class="param-group-header param-group-header--collapsible" data-target="grp-finishing">
+          <input type="checkbox" id="chk-finishing" ${fEnabled?'checked':''} style="margin-right:6px; accent-color:var(--accent);" onclick="event.stopPropagation()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:5px"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          Schlichten
+          <span class="grp-chevron" style="margin-left:auto;">▾</span>
+        </div>
+        <div id="grp-finishing">
+          <div class="param-row">
+            <span class="param-row-label">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" style="margin-right:4px;vertical-align:middle"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+              Werkzeug
+            </span>
+            <input type="text" id="op-f-tool" value="${fTool}" class="form-control" style="width:110px; height:28px; font-size:12px;">
+          </div>
+          <div class="param-row">
+            <span class="param-row-label">Modus</span>
+            <select id="op-f-mode" class="form-control" style="height:28px; font-size:12px; width:110px;">
+              <option value="traditional" ${fMode==='traditional'?'selected':''}>Traditional</option>
+              <option value="climb" ${fMode==='climb'?'selected':''}>Gleichlauf</option>
+            </select>
+          </div>
+          <div class="param-row">
+            <span class="param-row-label">Aufmaß</span>
+            <div class="form-control-unit param-row-input">
+              <input type="number" id="op-f-allowance" value="${fAllowance}" min="0" step="0.1">
+              <span class="unit-badge">mm</span>
+            </div>
           </div>
         </div>
-        <div class="param-row">
-          <span class="param-row-label">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="2.5" style="margin-right:4px;vertical-align:middle"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-            Vorschub
-          </span>
-          <div class="form-control-unit param-row-input">
-            <input type="number" id="op-feed" value="${feed}" min="1">
-            <span class="unit-badge">mm/m</span>
-          </div>
+      </div>
+
+      <!-- Kanten brechen -->
+      <div class="param-group">
+        <div class="param-group-header param-group-header--collapsible" data-target="grp-chamfer">
+          <input type="checkbox" id="chk-chamfer" ${cEnabled?'checked':''} style="margin-right:6px; accent-color:var(--accent);" onclick="event.stopPropagation()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:5px"><path d="M3 21l18-18M9 3h12v12"/></svg>
+          Kanten brechen
+          <span class="grp-chevron" style="margin-left:auto;">▾</span>
         </div>
-        <div class="param-row">
-          <span class="param-row-label">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="2.5" style="margin-right:4px;vertical-align:middle"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12"/></svg>
-            Drehzahl
-          </span>
-          <div class="form-control-unit param-row-input">
-            <input type="number" id="op-speed" value="${spd}" min="1">
-            <span class="unit-badge">RPM</span>
+        <div id="grp-chamfer">
+          <div class="param-row">
+            <span class="param-row-label">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" style="margin-right:4px;vertical-align:middle"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+              Werkzeug
+            </span>
+            <input type="text" id="op-c-tool" value="${cTool}" class="form-control" style="width:110px; height:28px; font-size:12px;">
+          </div>
+          <div class="param-row">
+            <span class="param-row-label">Fasentiefe</span>
+            <div class="form-control-unit param-row-input">
+              <input type="number" id="op-c-depth" value="${cDepth}" min="0.1" step="0.1">
+              <span class="unit-badge">mm</span>
+            </div>
+          </div>
+          <div class="param-row">
+            <span class="param-row-label">Anzahl Schritte</span>
+            <div class="form-control-unit param-row-input">
+              <input type="number" id="op-c-steps" value="${cSteps}" min="1" step="1">
+              <span class="unit-badge"></span>
+            </div>
           </div>
         </div>
       </div>
 
       <div style="padding:12px 16px;">
         <button class="btn btn-primary btn-full" id="btn-calc-toolpath">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:6px"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:6px"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
           Werkzeugweg berechnen
         </button>
       </div>
     `;
   }
-
   return { addOperation, getAll, generateFaceMilling, renderPanel, showToolpath, hideAllToolpaths };
 })();

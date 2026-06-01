@@ -85,16 +85,38 @@ document.addEventListener('DOMContentLoaded', () => {
     if (card) card.classList.add('active');
     document.getElementById('panel-content').innerHTML = Operations.renderPanel(index);
 
+    // Wire collapsible group headers
+    document.querySelectorAll('.param-group-header--collapsible').forEach(header => {
+      header.addEventListener('click', () => {
+        const target = document.getElementById(header.dataset.target);
+        if (!target) return;
+        const collapsed = target.style.display === 'none';
+        target.style.display = collapsed ? 'block' : 'none';
+        header.classList.toggle('grp-collapsed', !collapsed);
+      });
+    });
+
     document.getElementById('btn-calc-toolpath').addEventListener('click', () => {
-      const tool = {
-        diameter: parseFloat(document.getElementById('op-tool-dia').value),
-        length: parseFloat(document.getElementById('op-tool-len').value),
-      };
+      // Use roughing tool diameter/length from tool name (placeholder until tool DB)
+      const tool = { diameter: 16, length: 60 };
       const params = {
-        feed: parseFloat(document.getElementById('op-feed').value),
-        speed: parseFloat(document.getElementById('op-speed').value),
-        ae: parseFloat(document.getElementById('op-ae').value),
-        ap: parseFloat(document.getElementById('op-ap').value),
+        safeZ: parseFloat(document.getElementById('op-safeZ')?.value) || 50,
+        refZ:  parseFloat(document.getElementById('op-refZ')?.value)  || 0,
+        dir:   document.getElementById('op-dir')?.value || 'climb',
+        rEnabled: document.getElementById('chk-roughing')?.checked ?? true,
+        rTool: document.getElementById('op-r-tool')?.value || '',
+        rMode: document.getElementById('op-r-mode')?.value || 'parallel',
+        ap:    parseFloat(document.getElementById('op-ap')?.value)    || 2,
+        ae:    parseFloat(document.getElementById('op-ae')?.value)    || 12,
+        fEnabled: document.getElementById('chk-finishing')?.checked ?? true,
+        fTool: document.getElementById('op-f-tool')?.value || '',
+        fMode: document.getElementById('op-f-mode')?.value || 'traditional',
+        fAllowance: parseFloat(document.getElementById('op-f-allowance')?.value) || 0,
+        cEnabled: document.getElementById('chk-chamfer')?.checked ?? false,
+        cTool: document.getElementById('op-c-tool')?.value || '',
+        cDepth: parseFloat(document.getElementById('op-c-depth')?.value) || 0.5,
+        cSteps: parseInt(document.getElementById('op-c-steps')?.value)   || 1,
+        feed: 800, speed: 3000,
       };
       const result = Operations.generateFaceMilling({ tool, params }, Blank.getData(), index);
       const ops = Operations.getAll();

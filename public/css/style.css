@@ -564,3 +564,20 @@ select.form-control {
 .param-row-input input {
   width: 100%;
 }
+
+/* ── Collapsible param groups ── */
+.param-group-header--collapsible {
+  cursor: pointer;
+  user-select: none;
+}
+.param-group-header--collapsible:hover {
+  background: var(--border);
+}
+.grp-chevron {
+  font-size: 11px;
+  transition: transform 0.2s;
+  color: var(--text-3);
+}
+.grp-collapsed .grp-chevron {
+  transform: rotate(-90deg);
+}
