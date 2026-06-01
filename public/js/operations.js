@@ -196,7 +196,7 @@ const Operations = (() => {
                 <input type="number" id="op-ae-pct" value="${p.aePct ?? 45}" min="1" max="100" step="1" oninput="updateAeMm('r')">
                 <span class="unit-badge">%</span>
               </div>
-              <span id="op-ae-mm-r" style="font-size:11px; color:var(--text-3); white-space:nowrap;">${((p.aePct??45)/100*16).toFixed(1)} mm</span>
+              <span id="op-ae-mm-r" style="font-size:11px; color:var(--text-3); white-space:nowrap;">${((p.aePct??45)/100*(p.rToolDia??16)).toFixed(1)} mm</span>
             </div>
           </div>
           <div class="param-row">
@@ -219,7 +219,7 @@ const Operations = (() => {
                 <input type="number" id="op-ap" value="${rAp}" min="0.1" step="0.1" oninput="updateSteps('r')">
                 <span class="unit-badge">mm</span>
               </div>
-              <span id="op-steps-r" style="font-size:11px; color:var(--text-3); white-space:nowrap;">${Math.ceil((p.depth??5)/rAp)} Schr.</span>
+              <span id="op-steps-r" style="font-size:11px; color:var(--text-3); white-space:nowrap;">${Math.ceil((p.depth??5)/(p.rAp??2))} Schr.</span>
             </div>
           </div>
         </div>
