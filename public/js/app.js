@@ -107,6 +107,8 @@ document.addEventListener('DOMContentLoaded', () => {
         fEnabled: document.getElementById('chk-finishing')?.checked ?? true,
         fTool: document.getElementById('op-f-tool')?.value || '',
         fMode: document.getElementById('op-f-mode')?.value || 'traditional',
+        fAp: parseFloat(document.getElementById('op-f-ap')?.value) || 0.5,
+        fAe: parseFloat(document.getElementById('op-f-ae')?.value) || 12,
         fAllowance: parseFloat(document.getElementById('op-f-allowance')?.value) || 0,
         cEnabled: document.getElementById('chk-chamfer')?.checked ?? false,
         cTool: document.getElementById('op-c-tool')?.value || '',
