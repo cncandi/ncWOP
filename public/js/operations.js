@@ -89,11 +89,7 @@ const Operations = (() => {
           <span class="tree-op-name">Planfräsen ${oi+1}</span>
         </div>
         <div class="tree-op-body open">
-          <div class="tree-sub" data-oi="${oi}" data-sub="general">
-            <span class="tree-sub-icon">⚙</span>
-            <span class="tree-sub-name">Allgemein</span>
-          </div>
-          <div class="tree-sub ${r.enabled?'':'disabled'}" data-oi="${oi}" data-sub="roughing">
+          <div class="tree-sub ${r.enabled?'':'tree-sub-disabled'}" data-oi="${oi}" data-sub="roughing">
             <span class="tree-sub-icon">≡</span>
             <span class="tree-sub-name">Schruppen</span>
             <span class="tree-sub-tool">${r.tool}</span>

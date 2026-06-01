@@ -137,3 +137,13 @@ body { font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--text); 
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+/* Disabled sub-operation */
+.tree-sub-disabled {
+  opacity: 0.38;
+  pointer-events: none;
+}
+.tree-sub-disabled .tree-sub-name,
+.tree-sub-disabled .tree-sub-tool {
+  color: var(--text3);
+}
