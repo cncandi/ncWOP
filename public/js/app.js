@@ -87,6 +87,21 @@ document.addEventListener('DOMContentLoaded', () => {
           Operations.setSelected(oi, sub);
         });
       });
+
+      // Wire tool-select buttons
+      document.querySelectorAll('.tool-select-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const span = btn.querySelector('span[id$="-tool"]');
+          window.openToolSelector(tool => {
+            // Display as "T1 D16mm"
+            if (span) span.textContent = tool.id + ' D' + tool.diameter + 'mm';
+            Operations.saveParams(oi, sub);
+            Operations.generateFaceMilling(oi);
+            rebuildTree();
+            Operations.setSelected(oi, sub);
+          });
+        });
+      });
     }, 0);
   }
 
@@ -170,8 +185,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── Tool Manager ──
   let editingToolId = null;
+  let toolSelectCallback = null; // set when opened in select mode
 
   Tools.load().then(renderToolList);
+
+  // Open tool manager in SELECT mode — returns chosen tool via callback
+  window.openToolSelector = function(cb) {
+    toolSelectCallback = cb;
+    document.getElementById('tool-modal').style.display = 'flex';
+    renderToolList();
+  };
 
   document.getElementById('btn-tools').addEventListener('click', () => {
     document.getElementById('tool-modal').style.display = 'flex';
@@ -181,7 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-tool-cancel').addEventListener('click', closeToolModal);
   document.getElementById('tool-modal-backdrop').addEventListener('click', closeToolModal);
 
-  function closeToolModal() { document.getElementById('tool-modal').style.display = 'none'; }
+  function closeToolModal() { document.getElementById('tool-modal').style.display = 'none'; toolSelectCallback = null; }
 
   document.getElementById('btn-new-tool').addEventListener('click', () => {
     const t = Tools.add(Tools.newTool());
@@ -209,6 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="tool-item-name">${t.id} — ${t.name}</div>
           <div class="tool-item-meta">⌀${t.diameter}mm · L${t.length}mm</div>
         </div>
+        ${toolSelectCallback ? `<button class="tool-item-select" data-id="${t.id}">Wählen</button>` : ''}
         <button class="tool-item-del" data-id="${t.id}">🗑</button>
       `;
       item.addEventListener('click', e => {
@@ -222,6 +246,14 @@ document.addEventListener('DOMContentLoaded', () => {
           if (editingToolId === t.id) { editingToolId = null; document.getElementById('tool-edit-pane').innerHTML = '<p class="hint">Werkzeug wählen oder neu anlegen.</p>'; }
           renderToolList();
         }
+      });
+      const selBtn = item.querySelector('.tool-item-select');
+      if (selBtn) selBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        const cb = toolSelectCallback;
+        toolSelectCallback = null;
+        closeToolModal();
+        if (cb) cb(t);
       });
       list.appendChild(item);
     });

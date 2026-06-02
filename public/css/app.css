@@ -176,3 +176,12 @@ body { font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--text); 
 .tool-edit-row label { font-size: 12px; color: var(--text2); flex: 1; }
 .tool-edit-row input[type=number], .tool-edit-row input[type=text], .tool-edit-row select { width: 150px; height: 30px; padding: 0 8px; border: 1px solid var(--border); border-radius: var(--radius); font-family: 'DM Sans', sans-serif; font-size: 13px; outline: none; }
 .tool-edit-row input:focus, .tool-edit-row select:focus { border-color: var(--accent); }
+
+/* Tool select button in params */
+.tool-select-btn { display:flex; align-items:center; justify-content:space-between; gap:6px; width:130px; height:26px; padding:0 8px; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface); font-family:'DM Sans',sans-serif; font-size:12px; color:var(--text); cursor:pointer; transition:all 0.15s; }
+.tool-select-btn:hover { border-color:var(--accent); background:var(--accent-soft); }
+.tsb-icon { color:var(--text3); font-size:12px; }
+
+/* Select mode in tool manager */
+.tool-item-select { border:none; background:var(--accent); color:#fff; font-size:11px; padding:3px 8px; border-radius:5px; cursor:pointer; }
+.tool-item-select:hover { background:var(--accent-h); }

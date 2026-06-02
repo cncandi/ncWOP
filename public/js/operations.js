@@ -193,7 +193,7 @@ const Operations = (() => {
       const steps = Math.max(1, Math.ceil(Math.max(0, topSurfaceZ()-(r.depth??-5))/(r.ap||2)));
       html += group('Schruppen', [
         rowChk('Aktiv', 'r-enabled', r.enabled),
-        row('Werkzeug',      `<input class="p-control" style="border:1px solid var(--border);border-radius:var(--radius);height:26px;padding:0 8px;font-size:12px;width:130px;" id="r-tool" value="${r.tool}">`),
+        row('Werkzeug',      `<button type="button" class="tool-select-btn" id="r-tool-btn"><span id="r-tool">${r.tool}</span><span class="tsb-icon">⚙</span></button>`),
         row('Modus',         sel(r.mode, 'r-mode', ['parallel:Parallel','contour:Konturparallel','spiral:Spiralförmig'])),
         row('Seitl. Zust. ae', `<div class="p-control"><input type="number" id="r-ae-pct" value="${r.aePct||45}" min="1" max="100" step="1" oninput="ncwop_updateAe('r')"><span class="unit">%</span></div><span class="p-hint" id="r-ae-mm">${aeMm} mm</span>`),
         row('Tiefe (Z abs.)', ctrl(r.depth??-5, 'r-depth', 'mm', 'r')),
@@ -208,7 +208,7 @@ const Operations = (() => {
       const steps = Math.max(1, Math.ceil(Math.max(0, topSurfaceZ()-(f.depth??-5))/(f.ap||0.5)));
       html += group('Schlichten', [
         rowChk('Aktiv', 'f-enabled', f.enabled),
-        row('Werkzeug',      `<input class="p-control" style="border:1px solid var(--border);border-radius:var(--radius);height:26px;padding:0 8px;font-size:12px;width:130px;" id="f-tool" value="${f.tool}">`),
+        row('Werkzeug',      `<button type="button" class="tool-select-btn" id="f-tool-btn"><span id="f-tool">${f.tool}</span><span class="tsb-icon">⚙</span></button>`),
         row('Modus',         sel(f.mode, 'f-mode', ['parallel:Parallel','contour:Konturparallel','spiral:Spiralförmig'])),
         row('Seitl. Zust. ae', `<div class="p-control"><input type="number" id="f-ae-pct" value="${f.aePct||45}" min="1" max="100" step="1" oninput="ncwop_updateAe('f')"><span class="unit">%</span></div><span class="p-hint" id="f-ae-mm">${aeMm} mm</span>`),
         row('Tiefe (Z abs.)', ctrl(f.depth??-5, 'f-depth', 'mm', 'f')),
@@ -221,7 +221,7 @@ const Operations = (() => {
       const c = p.chamfer;
       html += group('Kanten brechen', [
         rowChk('Aktiv', 'c-enabled', c.enabled),
-        row('Werkzeug',      `<input class="p-control" style="border:1px solid var(--border);border-radius:var(--radius);height:26px;padding:0 8px;font-size:12px;width:130px;" id="c-tool" value="${c.tool}">`),
+        row('Werkzeug',      `<button type="button" class="tool-select-btn" id="c-tool-btn"><span id="c-tool">${c.tool}</span><span class="tsb-icon">⚙</span></button>`),
         row('Fasentiefe',    ctrl(c.depth||0.5, 'c-depth', 'mm')),
         row('Schritte',      ctrl(c.steps||1, 'c-steps', '')),
       ]);
@@ -253,7 +253,7 @@ const Operations = (() => {
     }
     if (sub==='roughing') {
       p.roughing.enabled = b('r-enabled')??true;
-      p.roughing.tool    = v('r-tool')||p.roughing.tool;
+      p.roughing.tool    = (document.getElementById('r-tool')?document.getElementById('r-tool').textContent:p.roughing.tool);
       p.roughing.mode    = v('r-mode')||'parallel';
       p.roughing.aePct   = n('r-ae-pct')||45;
       p.roughing.depth   = n('r-depth')||5;
@@ -261,7 +261,7 @@ const Operations = (() => {
     }
     if (sub==='finishing') {
       p.finishing.enabled   = b('f-enabled')??true;
-      p.finishing.tool      = v('f-tool')||p.finishing.tool;
+      p.finishing.tool      = (document.getElementById('f-tool')?document.getElementById('f-tool').textContent:p.finishing.tool);
       p.finishing.mode      = v('f-mode')||'parallel';
       p.finishing.aePct     = n('f-ae-pct')||45;
       p.finishing.depth     = n('f-depth')||5;
@@ -270,7 +270,7 @@ const Operations = (() => {
     }
     if (sub==='chamfer') {
       p.chamfer.enabled = b('c-enabled')??false;
-      p.chamfer.tool    = v('c-tool')||p.chamfer.tool;
+      p.chamfer.tool    = (document.getElementById('c-tool')?document.getElementById('c-tool').textContent:p.chamfer.tool);
       p.chamfer.depth   = n('c-depth')||0.5;
       p.chamfer.steps   = n('c-steps')||1;
     }
