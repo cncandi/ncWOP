@@ -9,8 +9,8 @@ const Operations = (() => {
   function defaultParams() {
     return {
       safeZ: 50, refZ: 0, dir: 'climb',
-      roughing: { enabled:true, tool:'T1 D16mm', mode:'parallel', aePct:45, depth:5, ap:2 },
-      finishing: { enabled:true, tool:'T1 D16mm', mode:'parallel', aePct:45, depth:5, ap:0.5, allowance:0 },
+      roughing: { enabled:true, tool:'T1 D16mm', mode:'parallel', aePct:45, depth:-5, ap:2 },
+      finishing: { enabled:true, tool:'T1 D16mm', mode:'parallel', aePct:45, depth:-5, ap:0.5, allowance:0 },
       chamfer:   { enabled:false, tool:'T2 D16mm 45°', depth:0.5, steps:1 }
     };
   }
@@ -21,6 +21,14 @@ const Operations = (() => {
   }
 
   function getOps() { return ops; }
+
+  function topSurfaceZ() {
+    const d = Blank.getData();
+    if (!d.params) return 0;
+    const topZ = d.params.z || d.params.h || 0;
+    const off = d.params._off || {x:0,y:0,z:0};
+    return topZ - off.z;
+  }
 
   /* ── toolpath generation ── */
   function generateFaceMilling(opIdx) {
@@ -38,27 +46,33 @@ const Operations = (() => {
     const y = bp.y || bp.d;
     const topZ = bp.z || bp.h;
 
-    const actualDepth = Math.min(depth, topZ);
-    const steps = Math.max(1, Math.ceil(actualDepth / ap));
+    // depth = ABSOLUTE Z target in part-origin coordinates (e.g. -10 = 10mm below origin)
+    // Top surface Z in part-origin coords:
+    const topSurfaceZ = topZ - off.z;        // world Z of top surface
+    const targetZ = depth;                    // absolute Z target (origin coords) = world Z (origin at 0)
+    // total material to remove from top surface down to targetZ
+    const removeDepth = Math.max(0, topSurfaceZ - targetZ);
+    const steps = Math.max(1, Math.ceil(removeDepth / ap));
     const x0 = -(x/2)-toolR, x1 = (x/2)+toolR;
 
     const pts = [];
     for (let s = 1; s <= steps; s++) {
-      const levelZ = topZ - Math.min(s*ap, actualDepth);
+      // Z level in world coords, stepping down from top surface to targetZ
+      const levelZ = topSurfaceZ - Math.min(s*ap, removeDepth);
       let cy = -(y/2)-toolR, dir = (s%2===1)?1:-1;
       while (cy <= (y/2)+toolR) {
         const fx = dir>0?x0:x1, tx = dir>0?x1:x0;
         for(let i=0;i<=50;i++) {
-          // Z-up: X across, Y depth-of-table, Z height. Apply origin offset.
           pts.push(new THREE.Vector3(
             (fx+(tx-fx)*(i/50)) - off.x,
             cy - off.y,
-            levelZ - off.z
+            levelZ
           ));
         }
         cy += ae; dir *= -1;
       }
     }
+    const actualDepth = removeDepth;
 
     if (toolpathLines[opIdx]) Viewer.remove(toolpathLines[opIdx]);
     Object.values(toolpathLines).forEach(l => { if(l) l.visible=false; });
@@ -176,13 +190,13 @@ const Operations = (() => {
       const r = p.roughing;
       const dia = parseFloat((r.tool.match(/D(\d+)/)||[])[1]) || 16;
       const aeMm = ((r.aePct||45)/100*dia).toFixed(1);
-      const steps = Math.ceil((r.depth||5)/(r.ap||2));
+      const steps = Math.max(1, Math.ceil(Math.max(0, topSurfaceZ()-(r.depth??-5))/(r.ap||2)));
       html += group('Schruppen', [
         rowChk('Aktiv', 'r-enabled', r.enabled),
         row('Werkzeug',      `<input class="p-control" style="border:1px solid var(--border);border-radius:var(--radius);height:26px;padding:0 8px;font-size:12px;width:130px;" id="r-tool" value="${r.tool}">`),
         row('Modus',         sel(r.mode, 'r-mode', ['parallel:Parallel','contour:Konturparallel','spiral:Spiralförmig'])),
         row('Seitl. Zust. ae', `<div class="p-control"><input type="number" id="r-ae-pct" value="${r.aePct||45}" min="1" max="100" step="1" oninput="ncwop_updateAe('r')"><span class="unit">%</span></div><span class="p-hint" id="r-ae-mm">${aeMm} mm</span>`),
-        row('Gesamttiefe',   ctrl(r.depth||5, 'r-depth', 'mm', 'r')),
+        row('Tiefe (Z abs.)', ctrl(r.depth??-5, 'r-depth', 'mm', 'r')),
         row('Tiefenzust. ap',`<div class="p-control"><input type="number" id="r-ap" value="${r.ap||2}" min="0.1" step="0.1" oninput="ncwop_updateSteps('r')"></div><span class="p-hint" id="r-steps">${steps} Schr.</span>`),
       ]);
     }
@@ -191,13 +205,13 @@ const Operations = (() => {
       const f = p.finishing;
       const dia = parseFloat((f.tool.match(/D(\d+)/)||[])[1]) || 16;
       const aeMm = ((f.aePct||45)/100*dia).toFixed(1);
-      const steps = Math.ceil((f.depth||5)/(f.ap||0.5));
+      const steps = Math.max(1, Math.ceil(Math.max(0, topSurfaceZ()-(f.depth??-5))/(f.ap||0.5)));
       html += group('Schlichten', [
         rowChk('Aktiv', 'f-enabled', f.enabled),
         row('Werkzeug',      `<input class="p-control" style="border:1px solid var(--border);border-radius:var(--radius);height:26px;padding:0 8px;font-size:12px;width:130px;" id="f-tool" value="${f.tool}">`),
         row('Modus',         sel(f.mode, 'f-mode', ['parallel:Parallel','contour:Konturparallel','spiral:Spiralförmig'])),
         row('Seitl. Zust. ae', `<div class="p-control"><input type="number" id="f-ae-pct" value="${f.aePct||45}" min="1" max="100" step="1" oninput="ncwop_updateAe('f')"><span class="unit">%</span></div><span class="p-hint" id="f-ae-mm">${aeMm} mm</span>`),
-        row('Gesamttiefe',   ctrl(f.depth||5, 'f-depth', 'mm', 'f')),
+        row('Tiefe (Z abs.)', ctrl(f.depth??-5, 'f-depth', 'mm', 'f')),
         row('Tiefenzust. ap',`<div class="p-control"><input type="number" id="f-ap" value="${f.ap||0.5}" min="0.1" step="0.1" oninput="ncwop_updateSteps('f')"></div><span class="p-hint" id="f-steps">${steps} Schr.</span>`),
         row('Aufmaß',        ctrl(f.allowance||0, 'f-allowance', 'mm')),
       ]);
@@ -308,8 +322,12 @@ window.ncwop_updateAe = function(type) {
 
 window.ncwop_updateSteps = function(type) {
   const prefix = type==='r' ? 'r' : 'f';
-  const depth = parseFloat(document.getElementById(prefix+'-depth')?.value)||5;
+  const depth = parseFloat(document.getElementById(prefix+'-depth')?.value);
   const ap    = parseFloat(document.getElementById(prefix+'-ap')?.value)||(type==='r'?2:0.5);
+  const d = Blank.getData();
+  let top = 0;
+  if (d.params) { top = (d.params.z||d.params.h||0) - (d.params._off?d.params._off.z:0); }
+  const remove = Math.max(0, top - (isNaN(depth)?-5:depth));
   const el = document.getElementById(prefix+'-steps');
-  if (el) el.textContent = Math.ceil(depth/ap)+' Schr.';
+  if (el) el.textContent = Math.max(1, Math.ceil(remove/ap))+' Schr.';
 };
