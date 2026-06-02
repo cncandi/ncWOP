@@ -101,69 +101,96 @@ const Operations = (() => {
   function renderTree(onSelect) {
     const tree = document.getElementById('op-tree');
     tree.innerHTML = '';
+
+    // Root: Setup (Aufspannung / Nullpunkt)
+    const setup = document.createElement('div');
+    setup.className = 'tv-node tv-setup';
+    setup.innerHTML = `
+      <div class="tv-row tv-row-setup" data-setup="1">
+        <span class="tv-chev open">▾</span>
+        <span class="tv-icon">▣</span>
+        <span class="tv-name">Aufspannung 1</span>
+      </div>
+      <div class="tv-children" id="tv-setup-children"></div>
+    `;
+    tree.appendChild(setup);
+    const setupChildren = setup.querySelector('#tv-setup-children');
+
+    setup.querySelector('.tv-row-setup').addEventListener('click', () => {
+      const ch = setup.querySelector('.tv-children');
+      const chev = setup.querySelector('.tv-chev');
+      const open = ch.classList.toggle('hidden');
+      chev.classList.toggle('open', !open);
+    });
+
     ops.forEach((op, oi) => {
       const r = op.params.roughing, f = op.params.finishing, c = op.params.chamfer;
-      const wrap = document.createElement('div');
-      wrap.className = 'tree-op';
-      wrap.innerHTML = `
-        <div class="tree-op-header" data-oi="${oi}">
-          <span class="tree-op-chevron open">▶</span>
-          <span class="tree-op-icon">◧</span>
-          <span class="tree-op-name">Planfräsen ${oi+1}</span>
+      const opNode = document.createElement('div');
+      opNode.className = 'tv-node';
+
+      // Sub-operation rows (each with its tool as a child)
+      function subRow(sub, icon, name, tool, enabled) {
+        return `
+          <div class="tv-node tv-sub-node">
+            <div class="tv-row tv-row-sub ${enabled?'':'tv-disabled'}" data-oi="${oi}" data-sub="${sub}">
+              <span class="tv-status ${enabled?'tv-ok':'tv-susp'}" title="${enabled?'Aktiv':'Deaktiviert'}"></span>
+              <span class="tv-icon-sub">${icon}</span>
+              <span class="tv-name">${name}</span>
+            </div>
+            <div class="tv-children">
+              <div class="tv-row tv-row-tool">
+                <span class="tv-icon-tool">⌀</span>
+                <span class="tv-tool-name">${tool}</span>
+              </div>
+            </div>
+          </div>`;
+      }
+
+      opNode.innerHTML = `
+        <div class="tv-row tv-row-op" data-oi="${oi}" data-sub="general">
+          <span class="tv-chev open">▾</span>
+          <span class="tv-status tv-ok" title="OK"></span>
+          <span class="tv-icon">◧</span>
+          <span class="tv-name">Planfräsen ${oi+1}</span>
         </div>
-        <div class="tree-op-body open">
-          <div class="tree-sub" data-oi="${oi}" data-sub="general">
-            <span class="tree-sub-icon">⚙</span>
-            <span class="tree-sub-name">Allgemein</span>
-          </div>
-          <div class="tree-sub ${r.enabled?'':'disabled'}" data-oi="${oi}" data-sub="roughing">
-            <span class="tree-sub-icon">≡</span>
-            <span class="tree-sub-name">Schruppen</span>
-            <span class="tree-sub-tool">${r.tool}</span>
-          </div>
-          <div class="tree-sub ${f.enabled?'':'disabled'}" data-oi="${oi}" data-sub="finishing">
-            <span class="tree-sub-icon">✎</span>
-            <span class="tree-sub-name">Schlichten</span>
-            <span class="tree-sub-tool">${f.tool}</span>
-          </div>
-          <div class="tree-sub ${c.enabled?'':'disabled'}" data-oi="${oi}" data-sub="chamfer">
-            <span class="tree-sub-icon">◿</span>
-            <span class="tree-sub-name">Kanten brechen</span>
-            <span class="tree-sub-tool">${c.tool}</span>
-          </div>
+        <div class="tv-children">
+          ${subRow('roughing','≡','Schruppen', r.tool, r.enabled)}
+          ${subRow('finishing','✎','Schlichten', f.tool, f.enabled)}
+          ${subRow('chamfer','◿','Kanten brechen', c.tool, c.enabled)}
         </div>
       `;
 
-      // Op header click = collapse/expand
-      wrap.querySelector('.tree-op-header').addEventListener('click', function() {
-        const body = wrap.querySelector('.tree-op-body');
-        const chev = wrap.querySelector('.tree-op-chevron');
-        const open = body.classList.toggle('open');
-        chev.classList.toggle('open', open);
-        // Also select general
+      // Op row: expand/collapse + select general
+      const opRow = opNode.querySelector('.tv-row-op');
+      opRow.addEventListener('click', () => {
+        const ch = opNode.querySelector('.tv-children');
+        const chev = opRow.querySelector('.tv-chev');
+        const collapsed = ch.classList.toggle('hidden');
+        chev.classList.toggle('open', !collapsed);
         onSelect(oi, 'general');
       });
 
-      // Sub-op clicks
-      wrap.querySelectorAll('.tree-sub').forEach(sub => {
-        sub.addEventListener('click', e => {
+      // Sub rows: select
+      opNode.querySelectorAll('.tv-row-sub').forEach(row => {
+        row.addEventListener('click', e => {
           e.stopPropagation();
-          onSelect(parseInt(sub.dataset.oi), sub.dataset.sub);
+          if (row.classList.contains('tv-disabled')) return;
+          onSelect(parseInt(row.dataset.oi), row.dataset.sub);
         });
       });
 
-      tree.appendChild(wrap);
+      setupChildren.appendChild(opNode);
     });
   }
 
   function setSelected(oi, sub) {
     activeOpIdx = oi; activeSubop = sub;
-    document.querySelectorAll('.tree-op-header, .tree-sub').forEach(el => el.classList.remove('selected'));
+    document.querySelectorAll('.tv-row-op, .tv-row-sub').forEach(el => el.classList.remove('selected'));
     if (sub === 'general') {
-      const hd = document.querySelector(`.tree-op-header[data-oi="${oi}"]`);
+      const hd = document.querySelector(`.tv-row-op[data-oi="${oi}"]`);
       if(hd) hd.classList.add('selected');
     } else {
-      const el = document.querySelector(`.tree-sub[data-oi="${oi}"][data-sub="${sub}"]`);
+      const el = document.querySelector(`.tv-row-sub[data-oi="${oi}"][data-sub="${sub}"]`);
       if(el) el.classList.add('selected');
     }
   }
