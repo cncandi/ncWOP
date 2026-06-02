@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let blankType = 'box';
   let blankCreated = false;
+  let originX = 'center', originY = 'center', originZ = 'top';
 
   // ── Tabs ──
   document.querySelectorAll('.tab').forEach(t => {
@@ -95,7 +96,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   // ── Origin picker ──
-  let originX = 'center', originY = 'center', originZ = 'top';
 
   const zBtns = { top: document.getElementById('oz-top'), center: document.getElementById('oz-center'), bottom: document.getElementById('oz-bottom') };
   Object.entries(zBtns).forEach(([z, btn]) => {
