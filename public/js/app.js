@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
     var wx=originX==='left'?-hx:originX==='right'?hx:0;
     var wy=originY==='front'?-hy:originY==='back'?hy:0;
     var wz=originZ==='top'?hz:originZ==='bottom'?0:hz/2;
-    Blank.create(blankType, p, {x:wx+ox, y:wz+oz, z:wy+oy});
+    Blank.create(blankType, p, {x:wx+ox, y:wy+oy, z:wz+oz});
     blankCreated = true;
     // Switch to ops tab hint
     document.getElementById('panel-body').innerHTML = '<p class="hint">Operation hinzufügen und Unteroperation wählen.</p>';
@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
     var wx=originX==='left'?-hx:originX==='right'?hx:0;
     var wy=originY==='front'?-hy:originY==='back'?hy:0;
     var wz=originZ==='top'?hz:originZ==='bottom'?0:hz/2;
-    Blank.setOffset({x:wx+ox, y:wz+oz, z:wy+oy});
+    Blank.setOffset({x:wx+ox, y:wy+oy, z:wz+oz});
   }
 
   function originLabel() {
