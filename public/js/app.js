@@ -35,10 +35,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const p = blankType==='box'
       ? { x: +document.getElementById('bx').value, y: +document.getElementById('by').value, z: +document.getElementById('bz').value }
       : { d: +document.getElementById('bd').value, h: +document.getElementById('bh').value };
-    Blank.create(blankType, p);
+
+    // Calculate offset: shift blank so chosen origin = world 0,0,0
+    const hx = (p.x||p.d||0)/2, hy = (p.y||p.d||0)/2, hz = (p.z||p.h||0);
+    const ox = parseFloat(document.getElementById('origin-ox')?.value)||0;
+    const oy = parseFloat(document.getElementById('origin-oy')?.value)||0;
+    const oz = parseFloat(document.getElementById('origin-oz')?.value)||0;
+    const wx = originX==='left'?-hx : originX==='right'?hx : 0;
+    const wy = originY==='front'?-hy : originY==='back'?hy : 0;
+    const wz = originZ==='top'?hz : originZ==='bottom'?0 : hz/2;
+    const offset = { x: wx+ox, y: wz+oz, z: wy+oy };
+
+    Blank.create(blankType, p, offset);
     blankCreated = true;
     updateOriginMarker();
-    // Switch to ops tab hint
     document.getElementById('panel-body').innerHTML = '<p class="hint">Operation hinzufügen und Unteroperation wählen.</p>';
   });
 
@@ -145,22 +155,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let originMarker = null;
   function updateOriginMarker() {
+    if (!window.THREE) return;
     if (originMarker) Viewer.remove(originMarker);
-    const pos = getOriginWorld();
-    const geo = new THREE.SphereGeometry(2, 8, 8);
-    const mat = new THREE.MeshBasicMaterial({color:0xff3b30});
-    originMarker = new THREE.Mesh(geo, mat);
-    originMarker.position.set(pos.x, pos.y, pos.z);
-    // Add axes lines
+    // Origin is always at world 0,0,0 after blank offset
     const axGeo = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(-15,0,0), new THREE.Vector3(15,0,0),
-      new THREE.Vector3(0,-15,0), new THREE.Vector3(0,15,0),
-      new THREE.Vector3(0,0,-15), new THREE.Vector3(0,0,15),
+      new THREE.Vector3(-20,0,0), new THREE.Vector3(20,0,0),
+      new THREE.Vector3(0,-20,0), new THREE.Vector3(0,20,0),
+      new THREE.Vector3(0,0,-20), new THREE.Vector3(0,0,20),
     ]);
-    const axMat = new THREE.LineBasicMaterial({color:0xff3b30, opacity:0.6, transparent:true});
-    const axLine = new THREE.LineSegments(axGeo, axMat);
-    originMarker.add(axLine);
-    originMarker.position.set(pos.x, pos.y, pos.z);
+    const axMat = new THREE.LineBasicMaterial({color:0xff3b30, opacity:0.8, transparent:true});
+    originMarker = new THREE.LineSegments(axGeo, axMat);
+    const sphere = new THREE.Mesh(
+      new THREE.SphereGeometry(2.5, 8, 8),
+      new THREE.MeshBasicMaterial({color:0xff3b30})
+    );
+    originMarker.add(sphere);
     Viewer.add(originMarker);
   }
 
