@@ -36,20 +36,20 @@ const HeightField = (() => {
     const geo = new THREE.PlaneGeometry(
       (cols-1)*cellX, (rows-1)*cellY, cols-1, rows-1
     );
-    // Plane is in XY by default (Z up after our convention)? PlaneGeometry is in XY plane, normal +Z. Good.
+    // Write absolute world X/Y into each vertex so mesh stays at origin (no double offset)
     const pos = geo.attributes.position;
     for (let r=0;r<rows;r++) {
       for (let c=0;c<cols;c++) {
         const i = r*cols+c;
+        pos.setX(i, minX + c*cellX);
+        pos.setY(i, minY + r*cellY);
         pos.setZ(i, grid[i]);
       }
     }
     geo.computeVertexNormals();
     const mat = new THREE.MeshPhongMaterial({color:baseColor, side:THREE.DoubleSide, flatShading:false});
     mesh = new THREE.Mesh(geo, mat);
-    // Center the plane at grid center
-    mesh.position.x = minX + (cols-1)*cellX/2;
-    mesh.position.y = minY + (rows-1)*cellY/2;
+    mesh.position.set(0,0,0);
     Viewer.add(mesh);
   }
 
