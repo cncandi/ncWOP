@@ -168,4 +168,104 @@ document.addEventListener('DOMContentLoaded', () => {
   originLabel();
 
 
+  // ── Tool Manager ──
+  let editingToolId = null;
+
+  Tools.load().then(renderToolList);
+
+  document.getElementById('btn-tools').addEventListener('click', () => {
+    document.getElementById('tool-modal').style.display = 'flex';
+    renderToolList();
+  });
+  document.getElementById('tool-modal-close').addEventListener('click', closeToolModal);
+  document.getElementById('btn-tool-cancel').addEventListener('click', closeToolModal);
+  document.getElementById('tool-modal-backdrop').addEventListener('click', closeToolModal);
+
+  function closeToolModal() { document.getElementById('tool-modal').style.display = 'none'; }
+
+  document.getElementById('btn-new-tool').addEventListener('click', () => {
+    const t = Tools.add(Tools.newTool());
+    renderToolList();
+    selectTool(t.id);
+  });
+
+  document.getElementById('btn-tool-save').addEventListener('click', async () => {
+    saveToolEdit();
+    const res = await Tools.save();
+    if (res.error) { alert('Speichern fehlgeschlagen.'); }
+    else { renderToolList(); }
+  });
+
+  function renderToolList() {
+    const list = document.getElementById('tool-list');
+    if (!list) return;
+    list.innerHTML = '';
+    Tools.getAll().forEach(t => {
+      const item = document.createElement('div');
+      item.className = 'tool-item' + (t.id === editingToolId ? ' active' : '');
+      item.innerHTML = `
+        <span class="tool-item-icon">⌀</span>
+        <div class="tool-item-info">
+          <div class="tool-item-name">${t.id} — ${t.name}</div>
+          <div class="tool-item-meta">⌀${t.diameter}mm · L${t.length}mm</div>
+        </div>
+        <button class="tool-item-del" data-id="${t.id}">🗑</button>
+      `;
+      item.addEventListener('click', e => {
+        if (e.target.classList.contains('tool-item-del')) return;
+        selectTool(t.id);
+      });
+      item.querySelector('.tool-item-del').addEventListener('click', e => {
+        e.stopPropagation();
+        if (confirm('Werkzeug '+t.id+' löschen?')) {
+          Tools.remove(t.id);
+          if (editingToolId === t.id) { editingToolId = null; document.getElementById('tool-edit-pane').innerHTML = '<p class="hint">Werkzeug wählen oder neu anlegen.</p>'; }
+          renderToolList();
+        }
+      });
+      list.appendChild(item);
+    });
+  }
+
+  function selectTool(id) {
+    editingToolId = id;
+    renderToolList();
+    const t = Tools.getById(id);
+    if (!t) return;
+    document.getElementById('tool-edit-pane').innerHTML = `
+      <div class="tool-edit-section">Allgemein</div>
+      <div class="tool-edit-row"><label>ID</label><input type="text" id="te-id" value="${t.id}" readonly style="background:var(--surface2);"></div>
+      <div class="tool-edit-row"><label>Bezeichnung</label><input type="text" id="te-name" value="${t.name}"></div>
+      <div class="tool-edit-row"><label>Typ</label>
+        <select id="te-type"><option value="endmill" ${t.type==='endmill'?'selected':''}>Schaftfräser</option></select>
+      </div>
+      <div class="tool-edit-section">Geometrie</div>
+      <div class="tool-edit-row"><label>Durchmesser (mm)</label><input type="number" id="te-dia" value="${t.diameter}" step="0.1"></div>
+      <div class="tool-edit-row"><label>Länge (mm)</label><input type="number" id="te-len" value="${t.length}" step="0.1"></div>
+      <div class="tool-edit-row"><label>Schneiden</label><input type="number" id="te-flutes" value="${t.flutes}" step="1"></div>
+      <div class="tool-edit-section">Schnittdaten</div>
+      <div class="tool-edit-row"><label>Vorschub (mm/min)</label><input type="number" id="te-feed" value="${t.cutData.feed}"></div>
+      <div class="tool-edit-row"><label>Drehzahl (RPM)</label><input type="number" id="te-speed" value="${t.cutData.speed}"></div>
+      <div class="tool-edit-row"><label>Max. Schnitttiefe (mm)</label><input type="number" id="te-mch" value="${t.cutData.maxCutHeight}" step="0.1"></div>
+      <div class="tool-edit-row"><label>Kühlung</label><input type="checkbox" id="te-coolant" ${t.cutData.coolant?'checked':''} style="width:18px;height:18px;accent-color:var(--accent);"></div>
+    `;
+  }
+
+  function saveToolEdit() {
+    if (!editingToolId) return;
+    Tools.update(editingToolId, {
+      name: document.getElementById('te-name').value,
+      type: document.getElementById('te-type').value,
+      diameter: parseFloat(document.getElementById('te-dia').value),
+      length: parseFloat(document.getElementById('te-len').value),
+      flutes: parseInt(document.getElementById('te-flutes').value),
+      cutData: {
+        feed: parseFloat(document.getElementById('te-feed').value),
+        speed: parseFloat(document.getElementById('te-speed').value),
+        maxCutHeight: parseFloat(document.getElementById('te-mch').value),
+        coolant: document.getElementById('te-coolant').checked
+      }
+    });
+  }
+
 });
