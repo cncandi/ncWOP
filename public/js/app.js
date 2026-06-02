@@ -114,6 +114,21 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Origin picker ──
   var originX = 'center', originY = 'center', originZ = 'top';
 
+  function applyOrigin() {
+    if (!blankCreated) return;
+    var d = Blank.getData();
+    if (!d.params) return;
+    var p = d.params;
+    var hx=(p.x||p.d||0)/2, hy=(p.y||p.d||0)/2, hz=(p.z||p.h||0);
+    var ox=parseFloat(document.getElementById('origin-ox').value)||0;
+    var oy=parseFloat(document.getElementById('origin-oy').value)||0;
+    var oz=parseFloat(document.getElementById('origin-oz').value)||0;
+    var wx=originX==='left'?-hx:originX==='right'?hx:0;
+    var wy=originY==='front'?-hy:originY==='back'?hy:0;
+    var wz=originZ==='top'?hz:originZ==='bottom'?0:hz/2;
+    Blank.setOffset({x:wx+ox, y:wz+oz, z:wy+oy});
+  }
+
   function originLabel() {
     var xL = {left:'Links',center:'Mitte',right:'Rechts'}[originX]||originX;
     var yL = {front:'vorne',center:'',back:'hinten'}[originY]||originY;
@@ -130,6 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
       el.classList.add('active');
       originZ = id==='oz-top'?'top':id==='oz-mid'?'center':'bottom';
       originLabel();
+      applyOrigin();
     });
   });
 
@@ -140,12 +156,13 @@ document.addEventListener('DOMContentLoaded', () => {
       originX = dot.dataset.x;
       originY = dot.dataset.y;
       originLabel();
+      applyOrigin();
     });
   });
 
   ['origin-ox','origin-oy','origin-oz'].forEach(function(id) {
     var el = document.getElementById(id);
-    if (el) el.addEventListener('input', originLabel);
+    if (el) el.addEventListener('input', function(){ originLabel(); applyOrigin(); });
   });
 
   originLabel();

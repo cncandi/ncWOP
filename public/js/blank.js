@@ -42,6 +42,19 @@ const Blank = (() => {
     show(m);
   }
 
+  function setOffset(offset) {
+    orig._off = offset || {x:0,y:0,z:0};
+    // Reposition current mesh live
+    if (cur) {
+      var p = orig;
+      // recompute base position then subtract offset
+      var baseY = (type==='box' ? p.z : p.h) / 2;
+      cur.position.x = -orig._off.x;
+      cur.position.y = baseY - orig._off.y;
+      cur.position.z = -orig._off.z;
+    }
+  }
+
   function getData() { return {type, params: orig}; }
-  return { create, setOpState, showOp, getData };
+  return { create, setOpState, showOp, getData, setOffset };
 })();
