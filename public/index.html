@@ -60,39 +60,84 @@
 
         <div class="s-section">
           <div class="section-label">Nullpunkt</div>
-
-          <!-- Visual picker: top/bottom toggle + 3x3 -->
           <div class="origin-z-toggle">
             <button class="toggle-btn active" id="oz-top">Oben</button>
-            <button class="toggle-btn" id="oz-center">Mitte</button>
-            <button class="toggle-btn" id="oz-bottom">Unten</button>
+            <button class="toggle-btn" id="oz-mid">Mitte</button>
+            <button class="toggle-btn" id="oz-bot">Unten</button>
           </div>
-
-          <div class="origin-picker" id="origin-picker">
-            <!-- 3x3: back-left, back-center(hidden), back-right -->
-            <!--       mid-left,  center,              mid-right  -->
-            <!--       front-left,front-center(hidden),front-right-->
-            <button class="op-dot" data-x="left"   data-y="back"  title="Links hinten"></button>
-            <div class="op-spacer"></div>
-            <button class="op-dot" data-x="right"  data-y="back"  title="Rechts hinten"></button>
-            <div class="op-spacer"></div>
-            <button class="op-dot op-center" data-x="center" data-y="center" title="Mitte"></button>
-            <div class="op-spacer"></div>
-            <button class="op-dot" data-x="left"   data-y="front" title="Links vorne"></button>
-            <div class="op-spacer"></div>
-            <button class="op-dot" data-x="right"  data-y="front" title="Rechts vorne"></button>
+          <div class="origin-picker">
+            <button class="op-dot" data-x="left"   data-y="back"   title="Links hinten"></button>
+            <div></div>
+            <button class="op-dot" data-x="right"  data-y="back"   title="Rechts hinten"></button>
+            <div></div>
+            <button class="op-dot op-ctr active" data-x="center" data-y="center" title="Mitte"></button>
+            <div></div>
+            <button class="op-dot" data-x="left"   data-y="front"  title="Links vorne"></button>
+            <div></div>
+            <button class="op-dot" data-x="right"  data-y="front"  title="Rechts vorne"></button>
           </div>
-
-          <div id="origin-label">Mitte</div>
-
-          <!-- Offset XYZ -->
-          <div class="section-label" style="margin-top:10px;">Versatz</div>
-          <div class="field-row"><label>X Versatz</label>
+          <div id="origin-label" style="text-align:center;font-size:11px;color:var(--text2);margin-bottom:8px;">Mitte oben</div>
+          <div class="section-label">Versatz</div>
+          <div class="field-row"><label>X</label>
             <div class="input-unit"><input type="number" id="origin-ox" value="0" step="0.1"><span>mm</span></div>
           </div>
-          <div class="field-row"><label>Y Versatz</label>
+          <div class="field-row"><label>Y</label>
             <div class="input-unit"><input type="number" id="origin-oy" value="0" step="0.1"><span>mm</span></div>
           </div>
-          <div class="field-row"><label>Z Versatz</label>
+          <div class="field-row"><label>Z</label>
             <div class="input-unit"><input type="number" id="origin-oz" value="0" step="0.1"><span>mm</span></div>
           </div>
+        </div>
+      </div>
+
+      <!-- Operationen tab -->
+      <div id="tab-ops" class="tab-content" style="display:none">
+        <div class="s-section">
+          <div id="op-tree"></div>
+          <button class="btn btn-ghost btn-full" id="btn-add-op">+ Planfräsen hinzufügen</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Viewport -->
+    <div id="viewport">
+      <canvas id="canvas"></canvas>
+      <div id="view-btns">
+        <button class="view-btn" id="v-top">⊤</button>
+        <button class="view-btn" id="v-iso">◈</button>
+        <button class="view-btn" id="v-front">▣</button>
+      </div>
+      <div id="sim-bar" style="display:none">
+        <div id="sim-prog-wrap"><div id="sim-prog"></div></div>
+        <div id="sim-btns">
+          <button class="sim-btn" id="s-start">⏮</button>
+          <button class="sim-btn" id="s-back">⏪</button>
+          <button class="sim-btn sim-primary" id="s-play">▶</button>
+          <button class="sim-btn" id="s-stop">■</button>
+          <button class="sim-btn" id="s-fwd">⏩</button>
+          <button class="sim-btn" id="s-end">⏭</button>
+          <span style="font-size:11px;color:#9398a5;margin-left:4px;">Geschw.</span>
+          <input type="range" id="sim-speed" min="1" max="15" value="3">
+        </div>
+      </div>
+    </div>
+
+    <!-- Right panel -->
+    <div id="panel">
+      <div id="panel-head">Parameter</div>
+      <div id="panel-body">
+        <p class="hint">Rohteil erstellen und Operation wählen.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="js/viewer.js"></script>
+<script src="js/blank.js"></script>
+<script src="js/simulation.js"></script>
+<script src="js/operations.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
