@@ -28,28 +28,39 @@ const Operations = (() => {
     const r = op.params.roughing;
     const blank = Blank.getData();
     const bp = blank.params;
+    const off = bp._off || {x:0,y:0,z:0};
     const toolDia = parseFloat((r.tool.match(/D(\d+)/)||[])[1]) || 16;
-    const ae = (r.aePct/100) * toolDia;
-    const ap = r.ap;
+    const ae    = (r.aePct/100) * toolDia;
+    const ap    = r.ap;
     const depth = r.depth;
     const toolR = toolDia/2;
     const x = bp.x || bp.d;
     const y = bp.y || bp.d;
-    const z = bp.z || bp.h;
-    const startZ = z - Math.min(ap, depth);
+    const topZ = bp.z || bp.h;
+
+    const actualDepth = Math.min(depth, topZ);
+    const steps = Math.max(1, Math.ceil(actualDepth / ap));
     const x0 = -(x/2)-toolR, x1 = (x/2)+toolR;
 
     const pts = [];
-    let cy = -(y/2)-toolR, dir = 1;
-    while (cy <= (y/2)+toolR) {
-      const fx = dir>0?x0:x1, tx = dir>0?x1:x0;
-      for(let i=0;i<=50;i++) pts.push(new THREE.Vector3(fx+(tx-fx)*(i/50), startZ, cy));
-      cy += ae; dir *= -1;
+    for (let s = 1; s <= steps; s++) {
+      const levelZ = topZ - Math.min(s*ap, actualDepth);
+      let cy = -(y/2)-toolR, dir = (s%2===1)?1:-1;
+      while (cy <= (y/2)+toolR) {
+        const fx = dir>0?x0:x1, tx = dir>0?x1:x0;
+        for(let i=0;i<=50;i++) {
+          // Z-up: X across, Y depth-of-table, Z height. Apply origin offset.
+          pts.push(new THREE.Vector3(
+            (fx+(tx-fx)*(i/50)) - off.x,
+            cy - off.y,
+            levelZ - off.z
+          ));
+        }
+        cy += ae; dir *= -1;
+      }
     }
 
-    // Remove old line
     if (toolpathLines[opIdx]) Viewer.remove(toolpathLines[opIdx]);
-    // Hide all other lines
     Object.values(toolpathLines).forEach(l => { if(l) l.visible=false; });
 
     const line = new THREE.Line(
@@ -59,12 +70,10 @@ const Operations = (() => {
     Viewer.add(line);
     toolpathLines[opIdx] = line;
 
-    // Update blank state
-    Blank.setOpState(opIdx, ap);
+    Blank.setOpState(opIdx, actualDepth);
     Blank.showOp(opIdx);
     op.stateIdx = opIdx;
 
-    // Init simulation
     Simulation.init(pts, toolDia, 60);
     document.getElementById('sim-bar').style.display = 'flex';
   }

@@ -6,15 +6,11 @@ const Simulation = (() => {
     pts=points; idx=0;
     if(tool) Viewer.remove(tool);
     const r=dia/2;
-    const m = new THREE.Mesh(
-      new THREE.CylinderGeometry(r,r,len,32),
-      new THREE.MeshPhongMaterial({color:0xffb300,transparent:true,opacity:0.85})
-    );
-    const sh = new THREE.Mesh(
-      new THREE.CylinderGeometry(r*.6,r*.6,len*.6,16),
-      new THREE.MeshPhongMaterial({color:0x888888})
-    );
-    sh.position.y = len*.8; m.add(sh);
+    const tGeo = new THREE.CylinderGeometry(r,r,len,32); tGeo.rotateX(Math.PI/2);
+    const m = new THREE.Mesh(tGeo, new THREE.MeshPhongMaterial({color:0xffb300,transparent:true,opacity:0.85}));
+    const shGeo = new THREE.CylinderGeometry(r*.6,r*.6,len*.6,16); shGeo.rotateX(Math.PI/2);
+    const sh = new THREE.Mesh(shGeo, new THREE.MeshPhongMaterial({color:0x888888}));
+    sh.position.z = len*.8; m.add(sh);
     tool=m; moveTo(0); Viewer.add(tool);
   }
 
@@ -22,7 +18,7 @@ const Simulation = (() => {
     idx = Math.max(0, Math.min(i, pts.length-1));
     if(!tool||!pts[idx]) return;
     const h=tool.geometry.parameters.height;
-    tool.position.set(pts[idx].x, pts[idx].y+h/2, pts[idx].z);
+    tool.position.set(pts[idx].x, pts[idx].y, pts[idx].z + h/2);
     const el=document.getElementById('sim-prog');
     if(el) el.style.width = (pts.length>1 ? idx/(pts.length-1)*100 : 0)+'%';
   }
