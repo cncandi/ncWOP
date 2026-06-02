@@ -26,9 +26,14 @@ const Viewer = (() => {
     grid.rotation.x = Math.PI / 2;
     scene.add(grid);
 
-    // Axes: X=red, Y=green, Z=blue (Three.js default colors, now Z points up)
-    const axes = new THREE.AxesHelper(60);
-    scene.add(axes);
+    // Custom CNC axes: X=red(right), Y=green(back), Z=blue(up)
+    function axisLine(x,y,z,color) {
+      const g = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), new THREE.Vector3(x,y,z)]);
+      return new THREE.Line(g, new THREE.LineBasicMaterial({color}));
+    }
+    scene.add(axisLine(70,0,0,0xff3b30)); // X red
+    scene.add(axisLine(0,70,0,0x00c48c)); // Y green
+    scene.add(axisLine(0,0,70,0x0057ff)); // Z blue
 
     controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true; controls.dampingFactor = 0.08;
