@@ -37,14 +37,17 @@ const Operations = (() => {
     const y = bp.y || bp.d;
     const topZ = bp.z || bp.h; // top surface Z
 
-    const steps = Math.max(1, Math.ceil(depth / ap));
+    // Clamp depth to available material — can't remove more than exists
+    const availableZ = topZ;
+    const actualDepth = Math.min(depth, availableZ);
+    const steps = Math.max(1, Math.ceil(actualDepth / ap));
     const x0 = -(x/2)-toolR, x1 = (x/2)+toolR;
 
     const pts = [];
 
     for (let s = 1; s <= steps; s++) {
       // Z level for this step: go down from top in ap increments, last step = full depth
-      const levelZ = topZ - Math.min(s * ap, depth);
+      const levelZ = topZ - Math.min(s * ap, actualDepth);
       let cy = -(y/2)-toolR, dir = (s % 2 === 1) ? 1 : -1;
       while (cy <= (y/2)+toolR) {
         const fx = dir>0?x0:x1, tx = dir>0?x1:x0;
@@ -64,8 +67,8 @@ const Operations = (() => {
     Viewer.add(line);
     toolpathLines[opIdx] = line;
 
-    // Update blank: remove full depth
-    Blank.setOpState(opIdx, depth);
+    // Update blank: remove actual depth (clamped to available material)
+    Blank.setOpState(opIdx, actualDepth);
     Blank.showOp(opIdx);
     op.stateIdx = opIdx;
 
