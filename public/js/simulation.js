@@ -1,9 +1,12 @@
 const Simulation = (() => {
   let pts=[], idx=0, tool=null, running=false, raf=null, spd=3;
+  let toolR = 8;
+  let carveMode = false;
 
   function init(points, dia, len) {
     stop();
     pts=points; idx=0;
+    toolR = dia/2;
     if(tool) Viewer.remove(tool);
     const r=dia/2;
     const tGeo = new THREE.CylinderGeometry(r,r,len,32); tGeo.rotateX(Math.PI/2);
@@ -14,13 +17,27 @@ const Simulation = (() => {
     tool=m; moveTo(0); Viewer.add(tool);
   }
 
+  function setCarveMode(on) { carveMode = on; }
+
   function moveTo(i) {
+    const prev = idx;
     idx = Math.max(0, Math.min(i, pts.length-1));
     if(!tool||!pts[idx]) return;
     const h=tool.geometry.parameters.height;
     tool.position.set(pts[idx].x, pts[idx].y, pts[idx].z + h/2);
     const el=document.getElementById('sim-prog');
     if(el) el.style.width = (pts.length>1 ? idx/(pts.length-1)*100 : 0)+'%';
+
+    // Carve material between prev and current index
+    if (carveMode && HeightField.isActive()) {
+      const from = Math.min(prev, idx), to = Math.max(prev, idx);
+      let changed = false;
+      for (let k=from; k<=to; k++) {
+        const p = pts[k];
+        if (HeightField.carve(p.x, p.y, p.z, toolR)) changed = true;
+      }
+      if (changed) HeightField.updateMesh();
+    }
   }
 
   function loop() {
@@ -44,5 +61,5 @@ const Simulation = (() => {
   function syncBtn(){ const b=document.getElementById('s-play'); if(b)b.textContent=running?'⏸':'▶'; }
   function isRunning(){ return running; }
 
-  return { init, play, pause, stop, toStart, toEnd, stepFwd, stepBck, setSpeed, isRunning };
+  return { init, play, pause, stop, toStart, toEnd, stepFwd, stepBck, setSpeed, isRunning, setCarveMode };
 })();

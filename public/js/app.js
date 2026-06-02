@@ -121,6 +121,23 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('s-back').addEventListener('click',  () => Simulation.stepBck());
   document.getElementById('sim-speed').addEventListener('input', e => Simulation.setSpeed(+e.target.value));
 
+  // Material removal toggle
+  let carveOn = false;
+  document.getElementById('s-carve').addEventListener('click', () => {
+    carveOn = !carveOn;
+    const btn = document.getElementById('s-carve');
+    btn.style.background = carveOn ? 'var(--accent)' : '';
+    btn.style.color = carveOn ? '#fff' : '';
+    Simulation.setCarveMode(carveOn);
+    if (carveOn) {
+      // Build heightfield from current blank
+      var d = Blank.getData();
+      if (d.params) HeightField.build(d);
+    } else {
+      HeightField.dispose();
+    }
+  });
+
   // ── Reset ──
   document.getElementById('btn-reset').addEventListener('click', () => location.reload());
 
