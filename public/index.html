@@ -132,6 +132,30 @@
     </div>
 
   </div>
+
+  <!-- Tool Manager Modal -->
+  <div id="tool-modal" style="display:none;">
+    <div id="tool-modal-backdrop"></div>
+    <div id="tool-modal-box">
+      <div id="tool-modal-head">
+        <span>Werkzeugverwaltung</span>
+        <button id="tool-modal-close">✕</button>
+      </div>
+      <div id="tool-modal-body">
+        <div id="tool-list-pane">
+          <div id="tool-list"></div>
+          <button class="btn btn-ghost btn-full" id="btn-new-tool">+ Neues Werkzeug</button>
+        </div>
+        <div id="tool-edit-pane">
+          <p class="hint">Werkzeug wählen oder neu anlegen.</p>
+        </div>
+      </div>
+      <div id="tool-modal-foot">
+        <button class="btn btn-ghost" id="btn-tool-cancel">Schließen</button>
+        <button class="btn btn-primary" id="btn-tool-save">Speichern</button>
+      </div>
+    </div>
+  </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
